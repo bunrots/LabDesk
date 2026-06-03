@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import base64
+import html
 import os
 import secrets
 from datetime import date
 
-from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, send_from_directory, url_for
+from flask import Blueprint, Response, abort, current_app, flash, jsonify, redirect, render_template, request, send_from_directory, url_for
 from werkzeug.utils import secure_filename
 
 from .db import get_db
@@ -102,6 +104,38 @@ def uploaded_logo(filename: str):
     if not os.path.exists(path):
         abort(404)
     return send_from_directory(_logo_upload_dir(), filename)
+
+
+@bp.route("/assets/favicon.svg")
+def uploaded_favicon():
+    db = get_db()
+    profile = get_lab_profile(db)
+    image_markup = ""
+    if profile["logo_filename"]:
+        path = os.path.join(_logo_upload_dir(), profile["logo_filename"])
+        if os.path.exists(path):
+            extension = os.path.splitext(path)[1].lower()
+            mime = {
+                ".png": "image/png",
+                ".jpg": "image/jpeg",
+                ".jpeg": "image/jpeg",
+                ".webp": "image/webp",
+                ".gif": "image/gif",
+                ".svg": "image/svg+xml",
+            }.get(extension, "image/png")
+            with open(path, "rb") as image_file:
+                encoded = base64.b64encode(image_file.read()).decode("ascii")
+            image_markup = (
+                f'<image href="data:{mime};base64,{encoded}" '
+                'x="7" y="7" width="50" height="50" preserveAspectRatio="xMidYMid meet" />'
+            )
+    accent = html.escape(profile["accent_color"] or "#0f8f83", quote=True)
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="white" />
+  <rect x="1.5" y="1.5" width="61" height="61" rx="12.5" fill="none" stroke="{accent}" stroke-opacity="0.18" />
+  {image_markup}
+</svg>"""
+    return Response(svg, mimetype="image/svg+xml")
 
 
 @bp.route("/", methods=["GET", "POST"])
@@ -284,14 +318,16 @@ def report_history():
     db = get_db()
     query = request.args.get("q", "").strip()
     report_date = request.args.get("report_date", "").strip() or None
+    include_drafts = request.args.get("show_drafts") == "1"
     page = request.args.get("page", type=int) or 1
-    rows, total = get_history(db, query, report_date, page=page, per_page=10)
+    rows, total = get_history(db, query, report_date, page=page, per_page=10, include_drafts=include_drafts)
     searched = bool(query or report_date)
     return render_template(
         "reports/history.html",
         reports=rows,
         query=query,
         report_date=report_date or "",
+        include_drafts=include_drafts,
         page=page,
         total=total,
         searched=searched,

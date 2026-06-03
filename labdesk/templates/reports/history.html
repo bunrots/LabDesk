@@ -9,7 +9,7 @@
         <p class="muted">بدون بحث، يتم عرض آخر 10 تقارير فقط. عند البحث، تظهر النتائج على صفحات من 10.</p>
       </div>
     </div>
-    <form method="get" class="search-grid">
+    <form method="get" class="search-grid history-search-grid">
       <label>
         بحث بالاسم أو رقم التقرير
         <input name="q" type="search" value="{{ query }}" placeholder="مثال: أحمد أو RP-20260603120000-ABC123">
@@ -18,7 +18,13 @@
         تاريخ التقرير
         <input name="report_date" type="date" value="{{ report_date }}">
       </label>
-      <button type="submit">تطبيق البحث</button>
+      <div class="history-search-actions">
+        <label class="checkbox-label history-search-toggle">
+          <input name="show_drafts" type="checkbox" value="1" {% if include_drafts %}checked{% endif %}>
+          إظهار المسودات
+        </label>
+        <button type="submit">تطبيق البحث</button>
+      </div>
     </form>
   </section>
 
@@ -60,11 +66,11 @@
     {% if searched and reports %}
       <div class="pagination-row">
         {% if has_prev %}
-          <a class="button ghost" href="{{ url_for('app.report_history', q=query, report_date=report_date, page=page-1) }}">الصفحة السابقة</a>
+          <a class="button ghost" href="{{ url_for('app.report_history', q=query, report_date=report_date, show_drafts='1' if include_drafts else None, page=page-1) }}">الصفحة السابقة</a>
         {% endif %}
         <span class="muted">إظهار {{ reports|length }} من أصل {{ total }}</span>
         {% if has_next %}
-          <a class="button ghost" href="{{ url_for('app.report_history', q=query, report_date=report_date, page=page+1) }}">الصفحة التالية</a>
+          <a class="button ghost" href="{{ url_for('app.report_history', q=query, report_date=report_date, show_drafts='1' if include_drafts else None, page=page+1) }}">الصفحة التالية</a>
         {% endif %}
       </div>
     {% endif %}

@@ -190,11 +190,15 @@ main {
 }
 
 .site-header {
+  margin-bottom: 0.9rem;
+  padding: 1rem 1.2rem;
+}
+
+.site-header-main {
   align-items: center;
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.9rem;
-  padding: 1rem 1.2rem;
+  gap: 1rem;
 }
 
 .brand-block {
@@ -203,15 +207,23 @@ main {
   gap: 1rem;
 }
 
+.site-logo-link {
+  align-items: center;
+  border-radius: 16px;
+  display: inline-flex;
+  justify-content: center;
+}
+
 .site-logo,
 .preview-logo {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 16px;
   height: 64px;
   object-fit: contain;
-  padding: 0.35rem;
   width: 64px;
+}
+
+.site-brand-copy {
+  display: grid;
+  gap: 0.12rem;
 }
 
 .site-subtitle {
@@ -238,6 +250,14 @@ main {
 .site-nav a.active,
 .site-nav a:focus-visible {
   background: color-mix(in srgb, var(--accent) 12%, white);
+}
+
+.app-version-footer {
+  color: color-mix(in srgb, var(--muted) 78%, white);
+  font-size: 0.78rem;
+  margin-top: 1rem;
+  opacity: 0.9;
+  text-align: center;
 }
 
 .eyebrow {
@@ -322,6 +342,23 @@ main {
   display: grid;
   gap: 0.9rem;
   grid-template-columns: 2fr 1fr auto;
+}
+
+.history-search-grid {
+  grid-template-columns: 2fr 1fr;
+}
+
+.history-search-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.85rem;
+  grid-column: 1 / -1;
+  justify-content: space-between;
+}
+
+.history-search-toggle {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .stack-form,
@@ -597,8 +634,8 @@ main {
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, white), #fff);
   border: 1px solid color-mix(in srgb, var(--accent) 18%, white);
   border-radius: 14px;
-  display: grid;
-  gap: 0.45rem;
+  display: flex;
+  align-items: center;
   min-height: 44px;
   padding: 0.7rem 0.8rem;
 }
@@ -606,6 +643,20 @@ main {
 .settings-preview-card {
   border-color: color-mix(in srgb, var(--accent) 18%, white);
   gap: 0.35rem;
+}
+
+.settings-header-preview {
+  background: linear-gradient(180deg, #fff, #fbfdff);
+  padding: 0.95rem 1rem;
+}
+
+.settings-preview-logo {
+  height: 58px;
+  width: 58px;
+}
+
+.settings-preview-letterhead {
+  min-height: 70px;
 }
 
 .type-help-card,
@@ -1133,6 +1184,7 @@ main {
   .patient-card,
   .action-row,
   .brand-block,
+  .site-header-main,
   .template-summary,
   .patient-card-actions,
   .pagination-row,
@@ -1164,6 +1216,7 @@ main {
     flex: 1;
     text-align: center;
   }
+
 }
 
 @page {

@@ -54,7 +54,6 @@
             <input name="accent_color" type="color" value="{{ profile.accent_color or '#0f8f83' }}">
           </label>
           <div class="accent-preview-card">
-            <span class="muted">المظهر الحالي</span>
             <div class="accent-preset-list">
               {% for color in accent_presets %}
                 <button class="accent-swatch" type="button" data-accent-swatch="{{ color }}" style="--swatch-color: {{ color }};"></button>
@@ -87,15 +86,27 @@
           <h3>الهوية الحالية</h3>
         </div>
       </div>
-      <div class="profile-preview settings-preview-card">
-        {% if profile.logo_filename %}
-          <img class="preview-logo" src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="شعار المخبر">
-        {% endif %}
-        <h4>{{ profile.facility_name }}</h4>
-        <p>{{ profile.report_title }}</p>
-        {% if profile.authority_line_1 %}<p>{{ profile.authority_line_1 }}</p>{% endif %}
-        {% if profile.authority_line_2 %}<p>{{ profile.authority_line_2 }}</p>{% endif %}
-        {% if profile.authority_line_3 %}<p>{{ profile.authority_line_3 }}</p>{% endif %}
+      <div class="profile-preview settings-preview-card settings-header-preview">
+        <header class="report-letterhead settings-preview-letterhead" aria-hidden="true">
+          <div class="letterhead-left">
+            <div class="report-brand report-brand-left">
+              {% if profile.logo_filename %}
+                <img class="report-logo settings-preview-logo" src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="شعار المخبر">
+              {% endif %}
+              <div class="report-brand-copy">
+                <h2>{{ profile.facility_name }}</h2>
+                {% if profile.report_subtitle %}<p>{{ profile.report_subtitle }}</p>{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="letterhead-right">
+            <div class="report-title-block report-title-block-right">
+              {% if profile.authority_line_1 %}<p>{{ profile.authority_line_1 }}</p>{% endif %}
+              {% if profile.authority_line_2 %}<p>{{ profile.authority_line_2 }}</p>{% endif %}
+              {% if profile.authority_line_3 %}<p>{{ profile.authority_line_3 }}</p>{% endif %}
+            </div>
+          </div>
+        </header>
       </div>
     </section>
   </div>
