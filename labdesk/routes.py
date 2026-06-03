@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 
 from .db import get_db
 from .services import (
+    SECTION_TYPE_INFO,
     SEX_LABELS,
     add_section_to_report,
     cancel_draft_report,
@@ -359,6 +360,7 @@ def settings():
         profile=profile,
         templates=templates,
         section_choices=get_section_choices(db),
+        section_type_info=SECTION_TYPE_INFO,
         accent_presets=[
             "#0f8f83",
             "#155b9c",

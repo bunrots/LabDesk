@@ -20,6 +20,12 @@ FLAG_LABELS = {
     "L": "منخفض",
 }
 
+SECTION_TYPE_INFO = {
+    "panel": {"label": "Panel", "description": "Standard grouped tests shown as a compact result table."},
+    "structured": {"label": "Structured", "description": "For descriptive sections like urine, stool, or smear with mixed fields."},
+    "custom": {"label": "Custom", "description": "A free-text report section for special or uncommon reports."},
+}
+
 
 def generate_identifier(kind: str) -> str:
     prefix = {"patient": "PT", "report": "RP"}[kind]
@@ -184,6 +190,56 @@ def build_definition_map(db):
     return mapping
 
 
+def _parse_optional_float(value, field_label: str):
+    raw = (value or "").strip()
+    if not raw:
+        return None
+    try:
+        return float(raw)
+    except ValueError as exc:
+        raise ValueError(f"{field_label} must be a valid number.") from exc
+
+
+def get_default_reference_range(db, test_code: str):
+    return db.execute(
+        """
+        SELECT *
+        FROM reference_ranges
+        WHERE test_code = ? AND sex IS NULL AND min_age_days IS NULL AND max_age_days IS NULL
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (test_code,),
+    ).fetchone()
+
+
+def upsert_default_reference_range(db, test_code: str, low_value, high_value, reference_text_ar: str | None):
+    existing = get_default_reference_range(db, test_code)
+    has_value = low_value is not None or high_value is not None or reference_text_ar
+    if not has_value:
+        if existing is not None:
+            db.execute("DELETE FROM reference_ranges WHERE id = ?", (existing["id"],))
+        return
+    if existing is None:
+        db.execute(
+            """
+            INSERT INTO reference_ranges
+            (test_code, sex, min_age_days, max_age_days, low_value, high_value, reference_text_ar)
+            VALUES (?, NULL, NULL, NULL, ?, ?, ?)
+            """,
+            (test_code, low_value, high_value, reference_text_ar),
+        )
+    else:
+        db.execute(
+            """
+            UPDATE reference_ranges
+            SET low_value = ?, high_value = ?, reference_text_ar = ?
+            WHERE id = ?
+            """,
+            (low_value, high_value, reference_text_ar, existing["id"]),
+        )
+
+
 def get_template_overview(db):
     sections = db.execute(
         """
@@ -203,6 +259,8 @@ def get_template_overview(db):
     for test in tests:
         row = dict(test)
         row["choices"] = json.loads(row["default_choices_json"] or "[]")
+        default_range = get_default_reference_range(db, row["test_code"])
+        row["default_range"] = dict(default_range) if default_range is not None else None
         grouped.setdefault(test["section_code"], []).append(row)
     overview = []
     for section in sections:
@@ -242,6 +300,9 @@ def create_test_definition(db, form):
     result_type = (form.get("result_type") or "").strip()
     default_unit_ar = (form.get("default_unit_ar") or "").strip() or None
     choices_text = (form.get("default_choices") or "").strip()
+    reference_text = (form.get("reference_text_ar") or "").strip() or None
+    low_value = _parse_optional_float(form.get("low_value"), "Low range")
+    high_value = _parse_optional_float(form.get("high_value"), "High range")
     if not section_code or not test_code or not label_ar or result_type not in {"numeric", "choice", "text"}:
         raise ValueError("بيانات التحليل الجديد غير مكتملة.")
     section = db.execute("SELECT 1 FROM section_templates WHERE code = ?", (section_code,)).fetchone()
@@ -254,7 +315,12 @@ def create_test_definition(db, form):
         "SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM test_definitions WHERE section_code = ?",
         (section_code,),
     ).fetchone()["next_order"]
-    choices = [choice.strip() for choice in choices_text.split(",") if choice.strip()]
+    choices = [choice.strip() for choice in choices_text.split(",") if choice.strip()] if result_type == "choice" else []
+    if result_type != "numeric":
+        default_unit_ar = None
+        low_value = None
+        high_value = None
+        reference_text = None
     db.execute(
         """
         INSERT INTO test_definitions
@@ -271,6 +337,8 @@ def create_test_definition(db, form):
             next_order,
         ),
     )
+    if result_type == "numeric":
+        upsert_default_reference_range(db, test_code, low_value, high_value, reference_text)
     db.commit()
 
 
@@ -315,16 +383,27 @@ def update_section_template(db, section_code: str, form):
 
 
 def update_test_definition(db, test_id: int, form):
+    current = db.execute("SELECT * FROM test_definitions WHERE id = ?", (test_id,)).fetchone()
+    if current is None:
+        raise ValueError("التحليل غير موجود.")
     label_ar = (form.get("label_ar") or "").strip()
     result_type = (form.get("result_type") or "").strip()
     default_unit_ar = (form.get("default_unit_ar") or "").strip() or None
     choices_text = (form.get("default_choices") or "").strip()
+    reference_text = (form.get("reference_text_ar") or "").strip() or None
+    low_value = _parse_optional_float(form.get("low_value"), "Low range")
+    high_value = _parse_optional_float(form.get("high_value"), "High range")
     is_active = 1 if form.get("is_active") == "on" else 0
     if not label_ar:
         raise ValueError("اسم التحليل مطلوب.")
     if result_type not in {"numeric", "choice", "text"}:
         raise ValueError("نوع الحقل غير صالح.")
-    choices = [choice.strip() for choice in choices_text.split(",") if choice.strip()]
+    choices = [choice.strip() for choice in choices_text.split(",") if choice.strip()] if result_type == "choice" else []
+    if result_type != "numeric":
+        default_unit_ar = None
+        low_value = None
+        high_value = None
+        reference_text = None
     db.execute(
         """
         UPDATE test_definitions
@@ -340,6 +419,7 @@ def update_test_definition(db, test_id: int, form):
             test_id,
         ),
     )
+    upsert_default_reference_range(db, current["test_code"], low_value, high_value, reference_text)
     db.commit()
 
 

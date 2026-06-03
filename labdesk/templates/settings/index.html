@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}الإعدادات{% endblock %}
 {% block content %}
-  <section class="hero-card hero-card-wide hero-card-tight">
+  <section class="hero-card hero-card-wide hero-card-tight settings-hero">
     <div>
       <p class="eyebrow">إدارة النظام</p>
       <h2>إعدادات المخبر وقوالب التقارير</h2>
@@ -10,14 +10,14 @@
   </section>
 
   <div class="grid two-columns">
-    <section class="panel">
+    <section class="panel settings-panel">
       <div class="panel-heading">
         <div>
           <p class="eyebrow">هوية المنشأة</p>
           <h3>بيانات المخبر والطباعة</h3>
         </div>
       </div>
-      <form method="post" enctype="multipart/form-data" class="stack-form">
+      <form method="post" enctype="multipart/form-data" class="stack-form settings-form">
         <label>
           اسم المخبر
           <input name="facility_name" type="text" value="{{ profile.facility_name }}" required>
@@ -48,15 +48,18 @@
           سطر وصفي أعلى التقرير
           <textarea name="header_notes" rows="3">{{ profile.header_notes or '' }}</textarea>
         </label>
-        <div class="grid compact-grid">
+        <div class="grid compact-grid settings-accent-grid">
           <label>
             لون التمييز
             <input name="accent_color" type="color" value="{{ profile.accent_color or '#0f8f83' }}">
           </label>
-          <div class="accent-preset-list">
-            {% for color in accent_presets %}
-              <button class="accent-swatch" type="button" data-accent-swatch="{{ color }}" style="--swatch-color: {{ color }};"></button>
-            {% endfor %}
+          <div class="accent-preview-card">
+            <span class="muted">المظهر الحالي</span>
+            <div class="accent-preset-list">
+              {% for color in accent_presets %}
+                <button class="accent-swatch" type="button" data-accent-swatch="{{ color }}" style="--swatch-color: {{ color }};"></button>
+              {% endfor %}
+            </div>
           </div>
         </div>
         <label>
@@ -77,14 +80,14 @@
       </form>
     </section>
 
-    <section class="panel">
+    <section class="panel settings-panel">
       <div class="panel-heading">
         <div>
           <p class="eyebrow">معاينة سريعة</p>
           <h3>الهوية الحالية</h3>
         </div>
       </div>
-      <div class="profile-preview">
+      <div class="profile-preview settings-preview-card">
         {% if profile.logo_filename %}
           <img class="preview-logo" src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="شعار المخبر">
         {% endif %}
@@ -97,41 +100,55 @@
     </section>
   </div>
 
-  <section class="panel">
-    <div class="panel-heading">
+  <section class="panel settings-panel">
+    <div class="panel-heading settings-heading-tight">
       <div>
         <p class="eyebrow">قوالب الأقسام</p>
         <h3>إدارة أسماء الأقسام والتحاليل الافتراضية</h3>
       </div>
     </div>
 
-    <div class="grid two-columns settings-creation-grid">
-      <form method="post" action="{{ url_for('app.create_section_template_view') }}" class="template-create-card">
-        <h4>إضافة قسم جديد</h4>
-        <div class="grid compact-grid">
+    <div class="grid two-columns settings-creation-grid settings-builder-grid">
+      <form method="post" action="{{ url_for('app.create_section_template_view') }}" class="template-create-card settings-card-tight">
+        <div class="settings-card-head">
+          <h4>إضافة قسم جديد</h4>
+          <p class="muted">أنشئ قسماً يظهر عند بناء التقرير.</p>
+        </div>
+        <div class="grid compact-grid settings-tight-grid">
+          <label>
+            الاسم العربي
+            <input name="name_ar" type="text" placeholder="قسم جديد" required>
+          </label>
           <label>
             رمز القسم
             <input name="code" type="text" placeholder="renal_panel" required>
           </label>
-          <label>
-            نوع القسم
-            <select name="section_type" required>
-              <option value="panel">Panel</option>
-              <option value="structured">Structured</option>
-              <option value="custom">Custom</option>
-            </select>
-          </label>
         </div>
         <label>
-          الاسم العربي
-          <input name="name_ar" type="text" placeholder="قسم جديد" required>
+          نوع القسم
+          <select name="section_type" required data-section-type-select>
+            <option value="panel">Panel</option>
+            <option value="structured">Structured</option>
+            <option value="custom">Custom</option>
+          </select>
         </label>
+        <div class="type-help-card" data-section-type-help>
+          <strong>{{ section_type_info['panel']['label'] }}</strong>
+          <p>{{ section_type_info['panel']['description'] }}</p>
+        </div>
         <button class="button compact-action" type="submit">إضافة القسم</button>
       </form>
 
-      <form method="post" action="{{ url_for('app.create_test_template_view') }}" class="template-create-card">
-        <h4>إضافة تحليل جديد</h4>
-        <div class="grid compact-grid">
+      <form method="post" action="{{ url_for('app.create_test_template_view') }}" class="template-create-card settings-card-tight" data-test-form>
+        <div class="settings-card-head">
+          <h4>إضافة تحليل جديد</h4>
+          <p class="muted">نوع الحقل يحدد ما الذي يظهر في نموذج الإدخال والطباعة.</p>
+        </div>
+        <div class="grid compact-grid settings-tight-grid">
+          <label>
+            الاسم العربي
+            <input name="label_ar" type="text" placeholder="حديد المصل" required>
+          </label>
           <label>
             القسم
             <select name="section_code" required>
@@ -141,99 +158,125 @@
               {% endfor %}
             </select>
           </label>
+        </div>
+        <div class="grid compact-grid settings-tight-grid">
+          <label>
+            رمز التحليل
+            <input name="test_code" type="text" placeholder="serum_iron" required>
+          </label>
           <label>
             نوع الحقل
-            <select name="result_type" required>
+            <select name="result_type" required data-result-type-select>
               <option value="numeric">رقمي</option>
               <option value="choice">اختيار</option>
               <option value="text">نصي</option>
             </select>
           </label>
         </div>
-        <div class="grid compact-grid">
-          <label>
-            رمز التحليل
-            <input name="test_code" type="text" placeholder="serum_iron" required>
-          </label>
+        <div class="grid compact-grid settings-tight-grid" data-result-fields="numeric">
           <label>
             الوحدة
             <input name="default_unit_ar" type="text" placeholder="mg/dL">
           </label>
+          <label>
+            مرجع مطبوع
+            <input name="reference_text_ar" type="text" placeholder="3.5 - 5.1">
+          </label>
         </div>
-        <label>
-          الاسم العربي
-          <input name="label_ar" type="text" placeholder="حديد المصل" required>
-        </label>
-        <label>
+        <div class="grid compact-grid settings-tight-grid" data-result-fields="numeric">
+          <label>
+            أقل قيمة طبيعية
+            <input name="low_value" type="number" step="any" placeholder="3.5">
+          </label>
+          <label>
+            أعلى قيمة طبيعية
+            <input name="high_value" type="number" step="any" placeholder="5.1">
+          </label>
+        </div>
+        <label data-result-fields="choice">
           خيارات الاختيار
           <input name="default_choices" type="text" placeholder="إيجابي, سلبي">
         </label>
+        <div class="field-type-hint muted" data-result-hint>
+          الحقل الرقمي يدعم الوحدة والمدى المرجعي والتنبيه مرتفع/منخفض.
+        </div>
         <button class="button compact-action" type="submit">إضافة التحليل</button>
       </form>
     </div>
 
-    <div class="template-stack compact-template-stack">
+    <div class="template-stack compact-template-stack settings-template-stack">
       {% for section in templates %}
-        <details class="template-card compact-template-card">
+        <details class="template-card compact-template-card settings-template-card">
           <summary class="template-summary">
             <div>
               <strong>{{ section.name_ar }}</strong>
-              <p class="muted">{{ section.code }} • {{ section.active_test_count }}/{{ section.tests|length }} مفعل</p>
+              <p class="muted">{{ section.code }} • {{ section.active_test_count }}/{{ section.tests|length }} مفعل • {{ section.section_type }}</p>
             </div>
             <span class="section-pill">{{ "مفعل" if section.is_active else "مخفي" }}</span>
           </summary>
-          <form method="post" action="{{ url_for('app.update_section_template_view', section_code=section.code) }}" class="stack-form">
-            <div class="panel-heading">
-              <div>
-                <h4>{{ section.name_ar }}</h4>
-                <p class="muted">{{ section.code }} • {{ section.section_type }}</p>
-              </div>
-              <button type="submit">حفظ القسم</button>
-            </div>
-            <div class="grid compact-grid">
+          <form method="post" action="{{ url_for('app.update_section_template_view', section_code=section.code) }}" class="stack-form settings-inline-form">
+            <div class="settings-inline-row">
               <label>
                 اسم القسم
                 <input name="name_ar" type="text" value="{{ section.name_ar }}">
               </label>
-              <label class="checkbox-label checkbox-align-end">
-                <input name="is_active" type="checkbox" {% if section.is_active %}checked{% endif %}>
-                تفعيل القسم
-              </label>
+              <div class="settings-inline-actions">
+                <label class="checkbox-label checkbox-align-end">
+                  <input name="is_active" type="checkbox" {% if section.is_active %}checked{% endif %}>
+                  تفعيل القسم
+                </label>
+                <button type="submit">حفظ القسم</button>
+              </div>
             </div>
           </form>
 
-          <div class="template-test-list compact-test-list">
+          <div class="template-test-list compact-test-list settings-test-list">
             {% for test in section.tests %}
-              <form method="post" action="{{ url_for('app.update_test_template_view', test_id=test.id) }}" class="test-editor">
-                <div class="grid template-test-grid">
+              <form method="post" action="{{ url_for('app.update_test_template_view', test_id=test.id) }}" class="test-editor settings-test-editor" data-test-form>
+                <div class="settings-test-head">
+                  <strong>{{ test.test_code }}</strong>
+                  <label class="checkbox-label checkbox-align-end">
+                    <input name="is_active" type="checkbox" {% if test.is_active %}checked{% endif %}>
+                    تفعيل
+                  </label>
+                </div>
+                <div class="grid settings-test-grid">
                   <label>
                     اسم التحليل
                     <input name="label_ar" type="text" value="{{ test.label_ar }}">
                   </label>
                   <label>
                     النوع
-                    <select name="result_type">
+                    <select name="result_type" data-result-type-select>
                       <option value="numeric" {% if test.result_type == "numeric" %}selected{% endif %}>رقمي</option>
                       <option value="choice" {% if test.result_type == "choice" %}selected{% endif %}>اختيار</option>
                       <option value="text" {% if test.result_type == "text" %}selected{% endif %}>نصي</option>
                     </select>
                   </label>
-                  <label>
+                  <label data-result-fields="numeric">
                     الوحدة
                     <input name="default_unit_ar" type="text" value="{{ test.default_unit_ar or '' }}">
                   </label>
-                  <label>
+                  <label data-result-fields="numeric">
+                    مرجع مطبوع
+                    <input name="reference_text_ar" type="text" value="{{ test.default_range.reference_text_ar if test.default_range else '' }}">
+                  </label>
+                  <label data-result-fields="numeric">
+                    أقل قيمة
+                    <input name="low_value" type="number" step="any" value="{{ test.default_range.low_value if test.default_range and test.default_range.low_value is not none else '' }}">
+                  </label>
+                  <label data-result-fields="numeric">
+                    أعلى قيمة
+                    <input name="high_value" type="number" step="any" value="{{ test.default_range.high_value if test.default_range and test.default_range.high_value is not none else '' }}">
+                  </label>
+                  <label data-result-fields="choice">
                     خيارات الاختيار
                     <input name="default_choices" type="text" value="{{ test.choices|join(', ') }}" placeholder="إيجابي, سلبي">
                   </label>
-                  <label class="checkbox-label checkbox-align-end">
-                    <input name="is_active" type="checkbox" {% if test.is_active %}checked{% endif %}>
-                    تفعيل
-                  </label>
-                  <div class="test-editor-actions">
-                    <span class="muted">{{ test.test_code }}</span>
-                    <button type="submit">حفظ التحليل</button>
-                  </div>
+                </div>
+                <div class="settings-test-footer">
+                  <span class="muted">{{ test.result_type }}</span>
+                  <button type="submit">حفظ التحليل</button>
                 </div>
               </form>
             {% else %}
@@ -244,4 +287,51 @@
       {% endfor %}
     </div>
   </section>
+
+  <script>
+    (function () {
+      const sectionHelp = {{ section_type_info|tojson }};
+      const resultHints = {
+        numeric: 'الحقل الرقمي يدعم الوحدة والمدى المرجعي والتنبيه مرتفع/منخفض.',
+        choice: 'حقل الاختيار مناسب للنتائج مثل إيجابي/سلبي أو المتوافق/غير المتوافق.',
+        text: 'الحقل النصي مناسب للوصف الحر مثل اللطاخة أو الملاحظات المجهرية.'
+      };
+
+      function toggleResultFields(form) {
+        const select = form.querySelector('[data-result-type-select]');
+        if (!select) return;
+        const type = select.value;
+        form.querySelectorAll('[data-result-fields]').forEach((block) => {
+          const enabled = block.dataset.resultFields === type;
+          block.hidden = !enabled;
+          block.querySelectorAll('input, select, textarea').forEach((field) => {
+            field.disabled = !enabled;
+          });
+        });
+        const hint = form.querySelector('[data-result-hint]');
+        if (hint) hint.textContent = resultHints[type] || '';
+      }
+
+      function updateSectionTypeHelp() {
+        const select = document.querySelector('[data-section-type-select]');
+        const help = document.querySelector('[data-section-type-help]');
+        if (!select || !help) return;
+        const item = sectionHelp[select.value] || sectionHelp.panel;
+        help.innerHTML = `<strong>${item.label}</strong><p>${item.description}</p>`;
+      }
+
+      document.querySelectorAll('[data-test-form]').forEach(toggleResultFields);
+      updateSectionTypeHelp();
+
+      document.addEventListener('change', function (event) {
+        const testForm = event.target.closest('[data-test-form]');
+        if (testForm && event.target.matches('[data-result-type-select]')) {
+          toggleResultFields(testForm);
+        }
+        if (event.target.matches('[data-section-type-select]')) {
+          updateSectionTypeHelp();
+        }
+      });
+    })();
+  </script>
 {% endblock %}

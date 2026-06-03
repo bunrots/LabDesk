@@ -547,8 +547,140 @@ main {
   text-align: right;
 }
 
+.settings-hero {
+  border-color: color-mix(in srgb, var(--accent) 18%, white);
+}
+
+.settings-panel {
+  border-color: color-mix(in srgb, var(--accent) 14%, white);
+}
+
+.settings-heading-tight {
+  margin-bottom: 0.6rem;
+}
+
 .settings-creation-grid {
   margin-bottom: 1rem;
+}
+
+.settings-builder-grid {
+  align-items: start;
+}
+
+.settings-card-tight {
+  gap: 0.7rem;
+  padding: 0.85rem;
+}
+
+.settings-card-head {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.settings-card-head p {
+  margin: 0;
+}
+
+.settings-tight-grid {
+  gap: 0.65rem;
+}
+
+.settings-form {
+  gap: 0.7rem;
+}
+
+.settings-accent-grid {
+  align-items: end;
+}
+
+.accent-preview-card {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, white), #fff);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, white);
+  border-radius: 14px;
+  display: grid;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.7rem 0.8rem;
+}
+
+.settings-preview-card {
+  border-color: color-mix(in srgb, var(--accent) 18%, white);
+  gap: 0.35rem;
+}
+
+.type-help-card,
+.field-type-hint {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, white), #fff);
+  border: 1px solid color-mix(in srgb, var(--accent) 15%, white);
+  border-radius: 12px;
+  color: var(--muted);
+  padding: 0.65rem 0.75rem;
+}
+
+.type-help-card strong {
+  color: var(--ink);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.type-help-card p {
+  margin: 0;
+}
+
+.settings-template-stack {
+  gap: 0.55rem;
+}
+
+.settings-template-card {
+  padding: 0.7rem 0.8rem;
+}
+
+.settings-inline-form {
+  gap: 0.55rem;
+}
+
+.settings-inline-row {
+  align-items: end;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: 1fr auto;
+}
+
+.settings-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.settings-test-list {
+  gap: 0.45rem;
+}
+
+.settings-test-editor {
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+}
+
+.settings-test-head {
+  align-items: center;
+  display: flex;
+  gap: 0.7rem;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+}
+
+.settings-test-grid {
+  align-items: end;
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-test-footer {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
 }
 
 .template-create-card {
@@ -568,6 +700,10 @@ main {
   align-self: start;
   min-height: 38px;
   padding: 0 0.95rem;
+}
+
+.settings-card-tight .compact-action {
+  width: auto;
 }
 
 .report-brand {
@@ -862,7 +998,9 @@ main {
   .compact-grid,
   .search-grid,
   .dob-grid,
-  .hero-stats {
+  .hero-stats,
+  .settings-test-grid,
+  .settings-inline-row {
     grid-template-columns: 1fr;
   }
 
@@ -873,7 +1011,10 @@ main {
   .brand-block,
   .template-summary,
   .patient-card-actions,
-  .pagination-row {
+  .pagination-row,
+  .settings-inline-actions,
+  .settings-test-head,
+  .settings-test-footer {
     align-items: stretch;
     flex-direction: column;
   }
