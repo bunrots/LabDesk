@@ -609,10 +609,10 @@ main {
 }
 
 .report-title-block-right {
-  align-content: start;
-  display: grid;
-  gap: 0.18rem;
-  justify-items: end;
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 0.06rem;
   min-width: max-content;
   text-align: right;
 }
@@ -620,6 +620,7 @@ main {
 .report-title-block-right p {
   font-size: 0.95rem;
   font-weight: 700;
+  line-height: 1.12;
   margin: 0;
   white-space: nowrap;
 }
