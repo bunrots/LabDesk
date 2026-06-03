@@ -564,7 +564,7 @@ main {
 }
 
 .settings-builder-grid {
-  align-items: start;
+  align-items: stretch;
 }
 
 .settings-card-tight {
@@ -649,6 +649,7 @@ main {
 .settings-inline-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.65rem;
 }
 
@@ -683,6 +684,12 @@ main {
   margin-top: 0.4rem;
 }
 
+.settings-test-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .template-create-card {
   background: linear-gradient(180deg, #fff, #f6fbfd);
   border: 1px solid rgba(15, 143, 131, 0.14);
@@ -692,18 +699,36 @@ main {
   padding: 0.95rem;
 }
 
+.settings-builder-card {
+  display: flex;
+  flex-direction: column;
+  align-content: start;
+  height: 100%;
+}
+
 .template-create-card h4 {
   margin: 0;
 }
 
 .compact-action {
-  align-self: start;
+  align-self: end;
   min-height: 38px;
   padding: 0 0.95rem;
 }
 
 .settings-card-tight .compact-action {
+  margin-top: auto;
   width: auto;
+}
+
+.settings-builder-note {
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.settings-builder-card > .compact-action {
+  align-self: stretch;
+  width: 100%;
 }
 
 .report-brand {
@@ -1036,7 +1061,7 @@ main {
 }
 
 .range-row-shell {
-  align-items: start;
+  align-items: end;
   display: grid;
   gap: 0.35rem;
   grid-template-columns: 1fr auto;
@@ -1046,7 +1071,7 @@ main {
   align-items: end;
   display: grid;
   gap: 0.35rem;
-  grid-template-columns: 0.7fr 0.95fr 0.95fr 0.9fr 0.9fr 1.1fr auto;
+  grid-template-columns: 0.7fr 1.15fr 1.15fr 0.9fr 0.9fr 1.1fr auto;
 }
 
 .range-row input,
@@ -1055,9 +1080,20 @@ main {
   padding: 0.55rem 0.7rem;
 }
 
+.age-bound-field {
+  display: grid;
+  gap: 0.25rem;
+  grid-template-columns: 1fr 88px;
+}
+
 .range-row-actions {
   display: flex;
   gap: 0.3rem;
+}
+
+.range-row-shell > form:last-child {
+  align-items: end;
+  display: flex;
 }
 
 .range-row-shell > form:last-child .compact-action,

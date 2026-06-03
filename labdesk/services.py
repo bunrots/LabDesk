@@ -267,10 +267,36 @@ def _parse_optional_int(value, field_label: str):
         raise ValueError(f"{field_label} يجب أن يكون رقماً صحيحاً.") from exc
 
 
+def _age_value_to_days(value, unit, field_label: str):
+    raw = (value or "").strip()
+    if not raw:
+        return None
+    try:
+        amount = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{field_label} يجب أن يكون رقماً صحيحاً.") from exc
+    unit = (unit or "").strip() or "days"
+    factors = {"days": 1, "months": 30, "years": 365}
+    if unit not in factors:
+        raise ValueError("وحدة العمر المرجعي غير صالحة.")
+    return amount * factors[unit]
+
+
+def _days_to_age_parts(days):
+    if days in (None, ""):
+        return {"value": "", "unit": "days"}
+    days = int(days)
+    if days % 365 == 0 and days >= 365:
+        return {"value": str(days // 365), "unit": "years"}
+    if days % 30 == 0 and days >= 30:
+        return {"value": str(days // 30), "unit": "months"}
+    return {"value": str(days), "unit": "days"}
+
+
 def create_specific_reference_range(db, test_code: str, form):
     sex = (form.get("sex") or "").strip() or None
-    min_age_days = _parse_optional_int(form.get("min_age_days"), "العمر الأدنى")
-    max_age_days = _parse_optional_int(form.get("max_age_days"), "العمر الأعلى")
+    min_age_days = _age_value_to_days(form.get("min_age_value") or form.get("min_age_days"), form.get("min_age_unit"), "العمر الأدنى")
+    max_age_days = _age_value_to_days(form.get("max_age_value") or form.get("max_age_days"), form.get("max_age_unit"), "العمر الأعلى")
     low_value = _parse_optional_float(form.get("low_value"), "الحد الأدنى")
     high_value = _parse_optional_float(form.get("high_value"), "الحد الأعلى")
     reference_text = (form.get("reference_text_ar") or "").strip() or None
@@ -306,8 +332,8 @@ def update_specific_reference_range(db, range_id: int, test_code: str, form):
         raise ValueError("القاعدة المرجعية غير موجودة.")
 
     sex = (form.get("sex") or "").strip() or None
-    min_age_days = _parse_optional_int(form.get("min_age_days"), "العمر الأدنى")
-    max_age_days = _parse_optional_int(form.get("max_age_days"), "العمر الأعلى")
+    min_age_days = _age_value_to_days(form.get("min_age_value") or form.get("min_age_days"), form.get("min_age_unit"), "العمر الأدنى")
+    max_age_days = _age_value_to_days(form.get("max_age_value") or form.get("max_age_days"), form.get("max_age_unit"), "العمر الأعلى")
     low_value = _parse_optional_float(form.get("low_value"), "الحد الأدنى")
     high_value = _parse_optional_float(form.get("high_value"), "الحد الأعلى")
     reference_text = (form.get("reference_text_ar") or "").strip() or None
@@ -366,7 +392,11 @@ def get_template_overview(db):
         row["choices"] = json.loads(row["default_choices_json"] or "[]")
         default_range = get_default_reference_range(db, row["test_code"])
         row["default_range"] = dict(default_range) if default_range is not None else None
-        row["specific_ranges"] = get_specific_reference_ranges(db, row["test_code"])
+        specific_ranges = get_specific_reference_ranges(db, row["test_code"])
+        for range_row in specific_ranges:
+            range_row["min_age_parts"] = _days_to_age_parts(range_row["min_age_days"])
+            range_row["max_age_parts"] = _days_to_age_parts(range_row["max_age_days"])
+        row["specific_ranges"] = specific_ranges
         grouped.setdefault(test["section_code"], []).append(row)
     overview = []
     for section in sections:
@@ -488,6 +518,18 @@ def update_section_template(db, section_code: str, form):
     db.commit()
 
 
+def delete_section_template(db, section_code: str):
+    section = db.execute("SELECT * FROM section_templates WHERE code = ?", (section_code,)).fetchone()
+    if section is None:
+        raise ValueError("القسم غير موجود.")
+    tests = db.execute("SELECT test_code FROM test_definitions WHERE section_code = ?", (section_code,)).fetchall()
+    for test in tests:
+        db.execute("DELETE FROM reference_ranges WHERE test_code = ?", (test["test_code"],))
+    db.execute("DELETE FROM test_definitions WHERE section_code = ?", (section_code,))
+    db.execute("DELETE FROM section_templates WHERE code = ?", (section_code,))
+    db.commit()
+
+
 def update_test_definition(db, test_id: int, form):
     current = db.execute("SELECT * FROM test_definitions WHERE id = ?", (test_id,)).fetchone()
     if current is None:
@@ -526,6 +568,15 @@ def update_test_definition(db, test_id: int, form):
         ),
     )
     upsert_default_reference_range(db, current["test_code"], low_value, high_value, reference_text)
+    db.commit()
+
+
+def delete_test_definition(db, test_id: int):
+    current = db.execute("SELECT * FROM test_definitions WHERE id = ?", (test_id,)).fetchone()
+    if current is None:
+        raise ValueError("التحليل غير موجود.")
+    db.execute("DELETE FROM reference_ranges WHERE test_code = ?", (current["test_code"],))
+    db.execute("DELETE FROM test_definitions WHERE id = ?", (test_id,))
     db.commit()
 
 

@@ -109,7 +109,7 @@
     </div>
 
     <div class="grid two-columns settings-creation-grid settings-builder-grid">
-      <form method="post" action="{{ url_for('app.create_section_template_view') }}" class="template-create-card settings-card-tight">
+      <form method="post" action="{{ url_for('app.create_section_template_view') }}" class="template-create-card settings-card-tight settings-builder-card">
         <div class="settings-card-head">
           <h4>إضافة قسم جديد</h4>
           <p class="muted">أنشئ قسماً يظهر عند بناء التقرير.</p>
@@ -139,7 +139,7 @@
         <button class="button compact-action" type="submit">إضافة القسم</button>
       </form>
 
-      <form method="post" action="{{ url_for('app.create_test_template_view') }}" class="template-create-card settings-card-tight" data-test-form>
+      <form method="post" action="{{ url_for('app.create_test_template_view') }}" class="template-create-card settings-card-tight settings-builder-card" data-test-form>
         <div class="settings-card-head">
           <h4>إضافة تحليل جديد</h4>
           <p class="muted">نوع الحقل يحدد ما الذي يظهر في نموذج الإدخال والطباعة.</p>
@@ -193,13 +193,14 @@
             <input name="high_value" type="number" step="any" placeholder="5.1">
           </label>
         </div>
-        <label data-result-fields="choice">
+        <label data-result-fields="choice" hidden>
           خيارات الاختيار
           <input name="default_choices" type="text" placeholder="إيجابي, سلبي">
         </label>
         <div class="field-type-hint muted" data-result-hint>
           الحقل الرقمي يدعم الوحدة والمدى المرجعي والتنبيه مرتفع/منخفض.
         </div>
+        <p class="muted settings-builder-note">يمكن إضافة مراجع متقدمة حسب الجنس أو العمر بعد حفظ التحليل الرقمي ثم فتحه من قائمة الأقسام أدناه.</p>
         <button class="button compact-action" type="submit">إضافة التحليل</button>
       </form>
     </div>
@@ -225,6 +226,7 @@
                   <input name="is_active" type="checkbox" {% if section.is_active %}checked{% endif %}>
                   تفعيل القسم
                 </label>
+                <button type="submit" formaction="{{ url_for('app.delete_section_template_view', section_code=section.code) }}" formmethod="post" class="button ghost danger-outline">حذف القسم</button>
                 <button type="submit">حفظ القسم</button>
               </div>
             </div>
@@ -280,7 +282,10 @@
                 </div>
                 <div class="settings-test-footer">
                   <span class="muted">{{ "حقول مرجعية ووحدة" if test.result_type == "numeric" else "خيارات جاهزة" if test.result_type == "choice" else "إدخال نصي حر" }}</span>
-                  <button type="submit">حفظ التحليل</button>
+                  <div class="settings-test-footer-actions">
+                    <button type="submit" formaction="{{ url_for('app.delete_test_template_view', test_id=test.id) }}" formmethod="post" class="button ghost danger-outline">حذف التحليل</button>
+                    <button type="submit">حفظ التحليل</button>
+                  </div>
                 </div>
                 </form>
                 {% if test.result_type == "numeric" %}
@@ -297,8 +302,22 @@
                                 <option value="male" {% if range.sex == "male" %}selected{% endif %}>ذكر</option>
                                 <option value="female" {% if range.sex == "female" %}selected{% endif %}>أنثى</option>
                               </select>
-                              <input name="min_age_days" type="number" min="0" step="1" value="{{ range.min_age_days if range.min_age_days is not none else '' }}" placeholder="العمر من/يوم">
-                              <input name="max_age_days" type="number" min="0" step="1" value="{{ range.max_age_days if range.max_age_days is not none else '' }}" placeholder="العمر إلى/يوم">
+                              <div class="age-bound-field">
+                                <input name="min_age_value" type="number" min="0" step="1" value="{{ range.min_age_parts.value }}" placeholder="العمر من">
+                                <select name="min_age_unit">
+                                  <option value="days" {% if range.min_age_parts.unit == "days" %}selected{% endif %}>يوم</option>
+                                  <option value="months" {% if range.min_age_parts.unit == "months" %}selected{% endif %}>شهر</option>
+                                  <option value="years" {% if range.min_age_parts.unit == "years" %}selected{% endif %}>سنة</option>
+                                </select>
+                              </div>
+                              <div class="age-bound-field">
+                                <input name="max_age_value" type="number" min="0" step="1" value="{{ range.max_age_parts.value }}" placeholder="العمر إلى">
+                                <select name="max_age_unit">
+                                  <option value="days" {% if range.max_age_parts.unit == "days" %}selected{% endif %}>يوم</option>
+                                  <option value="months" {% if range.max_age_parts.unit == "months" %}selected{% endif %}>شهر</option>
+                                  <option value="years" {% if range.max_age_parts.unit == "years" %}selected{% endif %}>سنة</option>
+                                </select>
+                              </div>
                               <input name="low_value" type="number" step="any" value="{{ range.low_value if range.low_value is not none else '' }}" placeholder="الحد الأدنى">
                               <input name="high_value" type="number" step="any" value="{{ range.high_value if range.high_value is not none else '' }}" placeholder="الحد الأعلى">
                               <input name="reference_text_ar" type="text" value="{{ range.reference_text_ar or '' }}" placeholder="مرجع مطبوع">
@@ -319,8 +338,22 @@
                             <option value="male">ذكر</option>
                             <option value="female">أنثى</option>
                           </select>
-                          <input name="min_age_days" type="number" min="0" step="1" placeholder="العمر من/يوم">
-                          <input name="max_age_days" type="number" min="0" step="1" placeholder="العمر إلى/يوم">
+                          <div class="age-bound-field">
+                            <input name="min_age_value" type="number" min="0" step="1" placeholder="العمر من">
+                            <select name="min_age_unit">
+                              <option value="days">يوم</option>
+                              <option value="months">شهر</option>
+                              <option value="years">سنة</option>
+                            </select>
+                          </div>
+                          <div class="age-bound-field">
+                            <input name="max_age_value" type="number" min="0" step="1" placeholder="العمر إلى">
+                            <select name="max_age_unit">
+                              <option value="days">يوم</option>
+                              <option value="months">شهر</option>
+                              <option value="years">سنة</option>
+                            </select>
+                          </div>
                           <input name="low_value" type="number" step="any" placeholder="الحد الأدنى">
                           <input name="high_value" type="number" step="any" placeholder="الحد الأعلى">
                           <input name="reference_text_ar" type="text" placeholder="مرجع مطبوع">
@@ -358,6 +391,7 @@
         form.querySelectorAll('[data-result-fields]').forEach((block) => {
           const enabled = block.dataset.resultFields === type;
           block.hidden = !enabled;
+          block.style.display = enabled ? '' : 'none';
           block.querySelectorAll('input, select, textarea').forEach((field) => {
             field.disabled = !enabled;
           });

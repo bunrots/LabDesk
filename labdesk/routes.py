@@ -20,7 +20,9 @@ from .services import (
     create_report,
     create_revision,
     create_test_definition,
+    delete_section_template,
     delete_specific_reference_range,
+    delete_test_definition,
     delete_section,
     finalize_report,
     get_catalog,
@@ -407,12 +409,34 @@ def update_section_template_view(section_code: str):
     return redirect(url_for("app.settings"))
 
 
+@bp.post("/settings/templates/sections/<section_code>/delete")
+def delete_section_template_view(section_code: str):
+    db = get_db()
+    try:
+        delete_section_template(db, section_code)
+        flash("تم حذف القسم وكل التحاليل التابعة له.", "success")
+    except ValueError as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("app.settings"))
+
+
 @bp.post("/settings/templates/tests/<int:test_id>")
 def update_test_template_view(test_id: int):
     db = get_db()
     try:
         update_test_definition(db, test_id, request.form)
         flash("تم تحديث التحليل.", "success")
+    except ValueError as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("app.settings"))
+
+
+@bp.post("/settings/templates/tests/<int:test_id>/delete")
+def delete_test_template_view(test_id: int):
+    db = get_db()
+    try:
+        delete_test_definition(db, test_id)
+        flash("تم حذف التحليل وقواعده المرجعية.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(url_for("app.settings"))
