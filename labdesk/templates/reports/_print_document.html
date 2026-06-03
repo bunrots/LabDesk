@@ -56,8 +56,14 @@
       <tr>
         <th>تاريخ التقرير</th>
         <td>{{ report.report_date }}</td>
-        <th>ملاحظات عامة</th>
-        <td colspan="3">{{ report.notes or "-" }}</td>
+        <th>الحالة</th>
+        <td>{{ "نسخة مراجعة" if report.revision_of_report_id else "نهائي" }}</td>
+        <th>مرجع</th>
+        <td>{{ report.report_number }}</td>
+      </tr>
+      <tr>
+        <th class="meta-notes-label">ملاحظات عامة</th>
+        <td class="meta-notes-value" colspan="5">{{ report.notes or "-" }}</td>
       </tr>
     </tbody>
   </table>
