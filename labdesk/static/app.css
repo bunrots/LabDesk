@@ -525,7 +525,7 @@ main {
 }
 
 .report-letterhead {
-  min-height: 104px;
+  min-height: 86px;
   position: relative;
   width: 100%;
   z-index: 2;
@@ -628,7 +628,7 @@ main {
   background: var(--accent);
   box-shadow: 0 5px 0 rgba(15, 143, 131, 0.07);
   height: 2px;
-  margin: 0.45rem 0 0.65rem;
+  margin: 0.18rem 0 0.65rem;
   position: relative;
   z-index: 2;
 }
@@ -774,7 +774,7 @@ main {
 }
 
 .report-footer {
-  border-top: 2px solid color-mix(in srgb, var(--accent) 35%, white);
+  border-top: 2px solid var(--accent);
   margin-top: auto;
   padding-top: 0.55rem;
   position: relative;
@@ -933,7 +933,7 @@ main {
   }
 
   .report-letterhead {
-    min-height: 104px;
+    min-height: 86px;
     position: relative;
   }
 
