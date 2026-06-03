@@ -138,6 +138,17 @@ def get_catalog(db):
     return [dict(row) for row in rows]
 
 
+def get_section_choices(db):
+    rows = db.execute(
+        """
+        SELECT code, name_ar
+        FROM section_templates
+        ORDER BY display_order, code
+        """
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def get_section_template(db, section_code: str):
     return db.execute(
         "SELECT * FROM section_templates WHERE code = ?",
@@ -202,15 +213,81 @@ def get_template_overview(db):
     return overview
 
 
-def get_patient_reports(db, patient_id: int):
-    return db.execute(
+def create_section_template(db, form):
+    code = (form.get("code") or "").strip().lower().replace(" ", "_")
+    name_ar = (form.get("name_ar") or "").strip()
+    section_type = (form.get("section_type") or "").strip()
+    if not code or not name_ar or section_type not in {"panel", "structured", "custom"}:
+        raise ValueError("بيانات القسم الجديد غير مكتملة.")
+    exists = db.execute("SELECT 1 FROM section_templates WHERE code = ?", (code,)).fetchone()
+    if exists is not None:
+        raise ValueError("رمز القسم مستخدم مسبقاً.")
+    next_order = db.execute(
+        "SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM section_templates"
+    ).fetchone()["next_order"]
+    db.execute(
         """
+        INSERT INTO section_templates (code, name_ar, section_type, display_order, is_active)
+        VALUES (?, ?, ?, ?, 1)
+        """,
+        (code, name_ar, section_type, next_order),
+    )
+    db.commit()
+
+
+def create_test_definition(db, form):
+    section_code = (form.get("section_code") or "").strip()
+    test_code = (form.get("test_code") or "").strip().lower().replace(" ", "_")
+    label_ar = (form.get("label_ar") or "").strip()
+    result_type = (form.get("result_type") or "").strip()
+    default_unit_ar = (form.get("default_unit_ar") or "").strip() or None
+    choices_text = (form.get("default_choices") or "").strip()
+    if not section_code or not test_code or not label_ar or result_type not in {"numeric", "choice", "text"}:
+        raise ValueError("بيانات التحليل الجديد غير مكتملة.")
+    section = db.execute("SELECT 1 FROM section_templates WHERE code = ?", (section_code,)).fetchone()
+    if section is None:
+        raise ValueError("القسم المحدد غير موجود.")
+    exists = db.execute("SELECT 1 FROM test_definitions WHERE test_code = ?", (test_code,)).fetchone()
+    if exists is not None:
+        raise ValueError("رمز التحليل مستخدم مسبقاً.")
+    next_order = db.execute(
+        "SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM test_definitions WHERE section_code = ?",
+        (section_code,),
+    ).fetchone()["next_order"]
+    choices = [choice.strip() for choice in choices_text.split(",") if choice.strip()]
+    db.execute(
+        """
+        INSERT INTO test_definitions
+        (section_code, test_code, label_ar, result_type, default_unit_ar, default_choices_json, display_order, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+        """,
+        (
+            section_code,
+            test_code,
+            label_ar,
+            result_type,
+            default_unit_ar,
+            json.dumps(choices, ensure_ascii=False),
+            next_order,
+        ),
+    )
+    db.commit()
+
+
+def get_patient_reports(db, patient_id: int, limit: int | None = None):
+    sql = """
         SELECT *
         FROM reports
         WHERE patient_id = ?
         ORDER BY report_date DESC, id DESC
-        """,
-        (patient_id,),
+    """
+    params = [patient_id]
+    if limit is not None:
+        sql += " LIMIT ?"
+        params.append(limit)
+    return db.execute(
+        sql,
+        params,
     ).fetchall()
 
 
@@ -339,7 +416,7 @@ def get_report(db, report_id: int):
     ).fetchone()
 
 
-def get_recent_reports(db, limit: int = 8):
+def get_recent_reports(db, limit: int = 10):
     return db.execute(
         """
         SELECT reports.id, reports.report_number, reports.report_date, reports.status, reports.print_count,
@@ -353,23 +430,37 @@ def get_recent_reports(db, limit: int = 8):
     ).fetchall()
 
 
-def search_patients(db, query: str | None):
+def search_patients(db, query: str | None, page: int = 1, per_page: int = 10):
+    page = max(page, 1)
+    offset = (page - 1) * per_page
     if not query:
-        return db.execute(
-            "SELECT * FROM patients ORDER BY updated_at DESC, id DESC LIMIT 12"
+        total = db.execute("SELECT COUNT(*) AS count FROM patients").fetchone()["count"]
+        rows = db.execute(
+            "SELECT * FROM patients ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?",
+            (per_page, offset),
         ).fetchall()
+        return rows, total
 
     like_query = f"%{query.strip()}%"
-    return db.execute(
+    total = db.execute(
+        """
+        SELECT COUNT(*) AS count
+        FROM patients
+        WHERE full_name LIKE ?
+        """,
+        (like_query,),
+    ).fetchone()["count"]
+    rows = db.execute(
         """
         SELECT *
         FROM patients
         WHERE full_name LIKE ?
         ORDER BY updated_at DESC, id DESC
-        LIMIT 20
+        LIMIT ? OFFSET ?
         """,
-        (like_query,),
+        (like_query, per_page, offset),
     ).fetchall()
+    return rows, total
 
 
 def get_history(db, query: str | None, report_date: str | None):

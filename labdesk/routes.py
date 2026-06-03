@@ -12,9 +12,11 @@ from .services import (
     SEX_LABELS,
     add_section_to_report,
     age_summary,
+    create_section_template,
     create_patient,
     create_report,
     create_revision,
+    create_test_definition,
     delete_section,
     finalize_report,
     get_catalog,
@@ -25,6 +27,7 @@ from .services import (
     get_patient_reports,
     get_recent_reports,
     get_report_bundle,
+    get_section_choices,
     get_template_overview,
     record_print,
     search_patients,
@@ -101,14 +104,16 @@ def patients_index():
     if request.method == "POST":
         try:
             patient = create_patient(db, request.form)
+            report = create_report(db, patient["id"], {})
             flash("تم حفظ المريض بنجاح.", "success")
-            return redirect(url_for("app.new_report", patient_id=patient["id"]))
+            return redirect(url_for("app.edit_report", report_id=report["id"]))
         except ValueError as exc:
             flash(str(exc), "error")
 
     query = request.args.get("q", "").strip()
-    patients = search_patients(db, query)
-    recent_reports = get_recent_reports(db)
+    page = request.args.get("page", type=int) or 1
+    patients, patient_total = search_patients(db, query, page=page, per_page=10)
+    recent_reports = get_recent_reports(db, limit=10)
     summary = get_dashboard_summary(db)
     patient_cards = []
     for patient in patients:
@@ -123,6 +128,10 @@ def patients_index():
         patients=patient_cards,
         query=query,
         recent_reports=recent_reports,
+        patient_total=patient_total,
+        page=page,
+        has_prev=page > 1,
+        has_next=page * 10 < patient_total,
         summary=summary,
         today=date.today().isoformat(),
         sex_labels=SEX_LABELS,
@@ -151,27 +160,22 @@ def patient_detail(patient_id: int):
 @bp.route("/reports/new", methods=["GET", "POST"])
 def new_report():
     db = get_db()
-    patient_id = request.args.get("patient_id", type=int) or request.form.get("patient_id", type=int)
+    patient_id = request.form.get("patient_id", type=int) or request.args.get("patient_id", type=int)
+    if request.method != "POST":
+        flash("أنشئ التقرير من شاشة المريض أو الاستقبال.", "error")
+        return redirect(url_for("app.patients_index"))
     patient = get_patient(db, patient_id) if patient_id else None
     if patient is None:
         flash("اختر مريضاً قبل إنشاء التقرير.", "error")
         return redirect(url_for("app.patients_index"))
 
-    if request.method == "POST":
-        try:
-            report = create_report(db, patient_id, request.form)
-            flash("تم إنشاء التقرير كمسودة.", "success")
-            return redirect(url_for("app.edit_report", report_id=report["id"]))
-        except ValueError as exc:
-            flash(str(exc), "error")
-
-    return render_template(
-        "reports/new.html",
-        patient=patient,
-        today=date.today().isoformat(),
-        sex_labels=SEX_LABELS,
-        patient_age_display=age_summary(patient),
-    )
+    try:
+        report = create_report(db, patient_id, request.form)
+        flash("تم إنشاء التقرير كمسودة.", "success")
+        return redirect(url_for("app.edit_report", report_id=report["id"]))
+    except ValueError as exc:
+        flash(str(exc), "error")
+        return redirect(url_for("app.patient_detail", patient_id=patient_id))
 
 
 @bp.route("/reports/<int:report_id>/edit", methods=["GET", "POST"])
@@ -329,6 +333,7 @@ def settings():
         "settings/index.html",
         profile=profile,
         templates=templates,
+        section_choices=get_section_choices(db),
         accent_presets=[
             "#0f8f83",
             "#155b9c",
@@ -337,6 +342,28 @@ def settings():
             "#8a5b16",
         ],
     )
+
+
+@bp.post("/settings/templates/sections")
+def create_section_template_view():
+    db = get_db()
+    try:
+        create_section_template(db, request.form)
+        flash("تمت إضافة قسم جديد.", "success")
+    except ValueError as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("app.settings"))
+
+
+@bp.post("/settings/templates/tests")
+def create_test_template_view():
+    db = get_db()
+    try:
+        create_test_definition(db, request.form)
+        flash("تمت إضافة تحليل جديد.", "success")
+    except ValueError as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("app.settings"))
 
 
 @bp.post("/settings/templates/sections/<section_code>")

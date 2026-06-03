@@ -33,6 +33,7 @@
         <div>
           <p class="eyebrow">1. بحث</p>
           <h3>ابحث عن ملف مريض</h3>
+          <p class="muted">عند عدم كتابة اسم، يتم عرض آخر 10 ملفات فقط.</p>
         </div>
       </div>
       <form class="stack-form" method="get">
@@ -58,10 +59,22 @@
               </div>
               <div class="patient-card-actions">
                 <a class="button ghost" href="{{ url_for('app.patient_detail', patient_id=patient['row']['id']) }}">فتح الملف</a>
-                <a class="button secondary" href="{{ url_for('app.new_report', patient_id=patient['row']['id']) }}">تقرير جديد</a>
+                <form method="post" action="{{ url_for('app.new_report') }}">
+                  <input type="hidden" name="patient_id" value="{{ patient['row']['id'] }}">
+                  <button class="button secondary" type="submit">تقرير جديد</button>
+                </form>
               </div>
             </article>
           {% endfor %}
+        </div>
+        <div class="pagination-row">
+          {% if has_prev %}
+            <a class="button ghost" href="{{ url_for('app.patients_index', q=query, page=page-1) }}">الصفحة السابقة</a>
+          {% endif %}
+          <span class="muted">إظهار {{ patients|length }} من أصل {{ patient_total }}</span>
+          {% if has_next %}
+            <a class="button ghost" href="{{ url_for('app.patients_index', q=query, page=page+1) }}">الصفحة التالية</a>
+          {% endif %}
         </div>
       {% else %}
         <p class="empty-state">لا توجد نتائج مطابقة حالياً.</p>
@@ -74,7 +87,7 @@
           <p class="eyebrow">2. إضافة</p>
           <h3>أضف مريضاً جديداً</h3>
         </div>
-        <span class="muted">ينتقل مباشرة إلى إنشاء التقرير</span>
+        <span class="muted">ينتقل مباشرة إلى شاشة التقرير</span>
       </div>
       <form method="post" class="stack-form">
         <label>
@@ -141,6 +154,7 @@
       <div>
         <p class="eyebrow">آخر ما تم</p>
         <h3>آخر التقارير</h3>
+        <p class="muted">يتم عرض آخر 10 تقارير فقط في هذه اللوحة.</p>
       </div>
     </div>
     {% if recent_reports %}

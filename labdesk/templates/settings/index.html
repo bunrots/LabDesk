@@ -105,6 +105,73 @@
       </div>
     </div>
 
+    <div class="grid two-columns settings-creation-grid">
+      <form method="post" action="{{ url_for('app.create_section_template_view') }}" class="template-create-card">
+        <h4>إضافة قسم جديد</h4>
+        <div class="grid compact-grid">
+          <label>
+            رمز القسم
+            <input name="code" type="text" placeholder="renal_panel" required>
+          </label>
+          <label>
+            نوع القسم
+            <select name="section_type" required>
+              <option value="panel">Panel</option>
+              <option value="structured">Structured</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          الاسم العربي
+          <input name="name_ar" type="text" placeholder="قسم جديد" required>
+        </label>
+        <button type="submit">إضافة القسم</button>
+      </form>
+
+      <form method="post" action="{{ url_for('app.create_test_template_view') }}" class="template-create-card">
+        <h4>إضافة تحليل جديد</h4>
+        <div class="grid compact-grid">
+          <label>
+            القسم
+            <select name="section_code" required>
+              <option value="">اختر</option>
+              {% for section in section_choices %}
+                <option value="{{ section.code }}">{{ section.name_ar }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            نوع الحقل
+            <select name="result_type" required>
+              <option value="numeric">رقمي</option>
+              <option value="choice">اختيار</option>
+              <option value="text">نصي</option>
+            </select>
+          </label>
+        </div>
+        <div class="grid compact-grid">
+          <label>
+            رمز التحليل
+            <input name="test_code" type="text" placeholder="serum_iron" required>
+          </label>
+          <label>
+            الوحدة
+            <input name="default_unit_ar" type="text" placeholder="mg/dL">
+          </label>
+        </div>
+        <label>
+          الاسم العربي
+          <input name="label_ar" type="text" placeholder="حديد المصل" required>
+        </label>
+        <label>
+          خيارات الاختيار
+          <input name="default_choices" type="text" placeholder="إيجابي, سلبي">
+        </label>
+        <button type="submit">إضافة التحليل</button>
+      </form>
+    </div>
+
     <div class="template-stack compact-template-stack">
       {% for section in templates %}
         <details class="template-card compact-template-card">

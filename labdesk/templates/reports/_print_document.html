@@ -28,40 +28,30 @@
     {% endif %}
   </section>
 
-  <section class="patient-grid-card">
-    <div class="meta-cell">
-      <span class="meta-label">رقم المريض</span>
-      <strong>{{ patient.patient_number }}</strong>
-    </div>
-    <div class="meta-cell">
-      <span class="meta-label">اسم المريض</span>
-      <strong>{{ patient.full_name }}</strong>
-    </div>
-    <div class="meta-cell">
-      <span class="meta-label">الجنس</span>
-      <strong>{{ sex_labels[patient.sex] }}</strong>
-    </div>
-    <div class="meta-cell">
-      <span class="meta-label">تاريخ الميلاد</span>
-      <strong>{{ patient.date_of_birth or "غير متاح" }}</strong>
-    </div>
-    <div class="meta-cell">
-      <span class="meta-label">العمر</span>
-      <strong>{{ patient_age_display }}</strong>
-    </div>
-    <div class="meta-cell">
-      <span class="meta-label">رقم التقرير</span>
-      <strong>{{ report.report_number }}</strong>
-    </div>
-    <div class="meta-cell">
-      <span class="meta-label">تاريخ التقرير</span>
-      <strong>{{ report.report_date }}</strong>
-    </div>
-    <div class="meta-cell meta-cell-wide">
-      <span class="meta-label">ملاحظات عامة</span>
-      <strong>{{ report.notes or "-" }}</strong>
-    </div>
-  </section>
+  <table class="patient-meta-table">
+    <tr>
+      <th>رقم المريض</th>
+      <td>{{ patient.patient_number }}</td>
+      <th>اسم المريض</th>
+      <td>{{ patient.full_name }}</td>
+      <th>الجنس</th>
+      <td>{{ sex_labels[patient.sex] }}</td>
+    </tr>
+    <tr>
+      <th>تاريخ الميلاد</th>
+      <td>{{ patient.date_of_birth or "غير متاح" }}</td>
+      <th>العمر</th>
+      <td>{{ patient_age_display }}</td>
+      <th>رقم التقرير</th>
+      <td>{{ report.report_number }}</td>
+    </tr>
+    <tr>
+      <th>تاريخ التقرير</th>
+      <td>{{ report.report_date }}</td>
+      <th>ملاحظات عامة</th>
+      <td colspan="3">{{ report.notes or "-" }}</td>
+    </tr>
+  </table>
 
   {% for section in sections %}
     <section class="print-section">

@@ -8,7 +8,10 @@
         <h2>{{ patient.full_name }}</h2>
       </div>
       <div class="action-row">
-        <a class="button secondary" href="{{ url_for('app.new_report', patient_id=patient.id) }}">تقرير جديد</a>
+        <form method="post" action="{{ url_for('app.new_report') }}">
+          <input type="hidden" name="patient_id" value="{{ patient.id }}">
+          <button class="button secondary" type="submit">تقرير جديد</button>
+        </form>
         <a class="button ghost" href="{{ url_for('app.patients_index', q=patient.full_name) }}">العودة للبحث</a>
       </div>
     </div>
