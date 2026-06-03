@@ -520,7 +520,7 @@ main {
   flex-direction: column;
   min-height: calc(297mm - 24mm);
   overflow: hidden;
-  padding: 0.3rem 0.35rem 0.15rem;
+  padding: 0.2rem 0.4rem 0.15rem;
   position: relative;
 }
 
@@ -529,7 +529,7 @@ main {
   display: grid;
   gap: 1rem;
   grid-template-columns: 1fr 1fr;
-  padding: 0.15rem 0.15rem 0 0.15rem;
+  padding: 0.05rem 0.15rem 0 0.15rem;
   position: relative;
   z-index: 2;
 }
@@ -563,14 +563,19 @@ main {
   gap: 0.85rem;
 }
 
+.report-brand-copy {
+  display: grid;
+  gap: 0.16rem;
+}
+
 .report-brand-left {
   justify-content: flex-start;
 }
 
 .report-logo {
-  height: 82px;
+  height: 86px;
   object-fit: contain;
-  width: 82px;
+  width: 86px;
 }
 
 .report-brand h2,
@@ -579,56 +584,75 @@ main {
 }
 
 .report-brand h2 {
-  font-size: 1.35rem;
+  font-size: 1.28rem;
+  font-weight: 700;
+}
+
+.report-brand-copy p {
+  color: #30343a;
+  font-size: 0.92rem;
+  margin: 0;
 }
 
 .report-title-block-right {
+  align-content: start;
+  display: grid;
+  gap: 0.18rem;
+  justify-items: end;
   text-align: right;
 }
 
 .report-title-block-right p {
-  margin: 0.1rem 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0;
 }
 
 .report-accent-line {
   background: var(--accent);
-  box-shadow: 0 6px 0 rgba(15, 143, 131, 0.08);
+  box-shadow: 0 5px 0 rgba(15, 143, 131, 0.07);
   height: 2px;
-  margin: 0.55rem 0 0.8rem;
+  margin: 0.45rem 0 0.65rem;
   position: relative;
   z-index: 2;
 }
 
 .report-watermark {
-  inset: 88px 0 48px;
-  opacity: 0.07;
+  inset: 78px 0 24px;
   pointer-events: none;
   position: absolute;
   z-index: 0;
 }
 
 .report-watermark img {
+  filter: grayscale(100%);
   height: 100%;
   object-fit: contain;
   object-position: center;
-  opacity: 0.16;
+  opacity: 0.085;
   width: 100%;
 }
 
 .report-main-title {
-  margin: 0.2rem 0 0.65rem;
+  margin: 0.15rem 0 0.55rem;
   position: relative;
   text-align: center;
   z-index: 2;
 }
 
+.report-kicker {
+  color: #4c525a;
+  font-size: 0.82rem;
+  margin: 0 0 0.12rem;
+}
+
 .report-main-title h1 {
-  font-size: 1.45rem;
+  font-size: 1.4rem;
   margin: 0;
 }
 
 .report-main-title p {
-  margin: 0.2rem 0 0;
+  margin: 0.16rem 0 0;
 }
 
 .report-corrected-note {
@@ -637,9 +661,9 @@ main {
 }
 
 .patient-meta-table {
-  border: 1px solid #98a8ba;
+  border: 1px solid #8fa0b4;
   border-collapse: collapse;
-  margin-top: 0.4rem;
+  margin-top: 0.35rem;
   position: relative;
   table-layout: fixed;
   width: 100%;
@@ -648,21 +672,21 @@ main {
 
 .patient-meta-table th,
 .patient-meta-table td {
-  border: 1px solid #98a8ba;
-  padding: 0.28rem 0.4rem;
+  border: 1px solid #8fa0b4;
+  padding: 0.24rem 0.34rem;
   text-align: right;
   vertical-align: middle;
 }
 
 .patient-meta-table th {
-  background: #f4f4f4;
-  font-size: 0.8rem;
+  background: #f1f4f7;
+  font-size: 0.78rem;
   font-weight: 700;
-  width: 10%;
+  width: 11%;
 }
 
 .patient-meta-table td {
-  font-size: 0.88rem;
+  font-size: 0.86rem;
 }
 
 .report-body {
@@ -678,33 +702,35 @@ main {
 }
 
 .section-banner {
-  background: #fff;
-  border: 1px solid #98a8ba;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, white), #fff);
+  border: 1px solid #8fa0b4;
   border-bottom: 0;
   color: #111;
-  font-size: 0.96rem;
+  font-size: 0.93rem;
   font-weight: 700;
-  padding: 0.35rem 0.5rem;
+  padding: 0.34rem 0.5rem;
   text-align: center;
 }
 
 .print-table {
-  border: 1px solid #98a8ba;
+  border: 1px solid #8fa0b4;
 }
 
 .print-table th,
 .print-table td {
-  border: 1px solid #98a8ba;
-  padding: 0.34rem 0.32rem;
+  border: 1px solid #8fa0b4;
+  padding: 0.32rem 0.28rem;
 }
 
 .print-table thead th {
-  background: #f4f4f4;
+  background: linear-gradient(180deg, #f8fbfd, #eef3f7);
   color: #222;
+  font-size: 0.79rem;
 }
 
 .result-value-cell {
   font-weight: 700;
+  text-align: center;
 }
 
 .print-table tr.is-high {

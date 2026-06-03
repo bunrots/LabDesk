@@ -1,10 +1,16 @@
 <article class="report-document">
+  {% if profile.logo_filename %}
+    <div class="report-watermark" aria-hidden="true">
+      <img src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="">
+    </div>
+  {% endif %}
+
   <header class="report-brand-header">
     <div class="report-brand report-brand-left">
       {% if profile.logo_filename %}
         <img class="report-logo" src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="شعار المنشأة">
       {% endif %}
-      <div>
+      <div class="report-brand-copy">
         <h2>{{ profile.facility_name }}</h2>
         {% if profile.report_subtitle %}<p>{{ profile.report_subtitle }}</p>{% endif %}
       </div>
@@ -18,13 +24,8 @@
 
   <div class="report-accent-line"></div>
 
-  {% if profile.logo_filename %}
-    <div class="report-watermark" aria-hidden="true">
-      <img src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="">
-    </div>
-  {% endif %}
-
   <section class="report-main-title">
+    <p class="report-kicker">{{ report.lab_header_text or "التقرير النهائي" }}</p>
     <h1>{{ profile.report_title }}</h1>
     {% if profile.header_notes %}
       <p>{{ profile.header_notes }}</p>

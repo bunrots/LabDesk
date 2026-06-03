@@ -31,6 +31,7 @@ from .services import (
     get_section_choices,
     get_template_overview,
     record_print,
+    render_snapshot_html,
     search_patients,
     update_lab_profile,
     update_report,
@@ -304,10 +305,14 @@ def show_report(report_id: int):
     if bundle["report"]["status"] == "draft":
         return redirect(url_for("app.edit_report", report_id=report_id))
 
+    snapshot_html = bundle["report"]["snapshot_html"]
+    if current_app.debug or not snapshot_html:
+        snapshot_html = render_snapshot_html(bundle)
+
     return render_template(
         "reports/show.html",
         bundle=bundle,
-        snapshot_html=bundle["report"]["snapshot_html"],
+        snapshot_html=snapshot_html,
     )
 
 
