@@ -1305,7 +1305,8 @@ main {
   .no-print,
   .site-header,
   .flash-stack,
-  .app-backdrop {
+  .app-backdrop,
+  .app-version-footer {
     display: none !important;
   }
 
