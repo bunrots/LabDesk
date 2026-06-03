@@ -695,7 +695,7 @@ def search_patients(db, query: str | None, page: int = 1, per_page: int = 5):
     return rows, total
 
 
-def get_history(db, query: str | None, report_date: str | None, page: int = 1, per_page: int = 10):
+def get_history(db, query: str | None, report_date: str | None, page: int = 1, per_page: int = 10, include_drafts: bool = False):
     sql = """
         SELECT reports.*, patients.full_name AS patient_name
         FROM reports
@@ -711,6 +711,9 @@ def get_history(db, query: str | None, report_date: str | None, page: int = 1, p
     params = []
     count_params = []
     searched = bool((query or "").strip() or report_date)
+    if not include_drafts:
+        sql += " AND reports.status = 'final'"
+        count_sql += " AND reports.status = 'final'"
     if query:
         sql += " AND (patients.full_name LIKE ? OR reports.report_number LIKE ?)"
         count_sql += " AND (patients.full_name LIKE ? OR reports.report_number LIKE ?)"
