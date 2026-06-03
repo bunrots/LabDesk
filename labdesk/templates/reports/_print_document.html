@@ -5,22 +5,28 @@
     </div>
   {% endif %}
 
-  <header class="report-brand-header">
-    <div class="report-brand report-brand-left">
-      {% if profile.logo_filename %}
-        <img class="report-logo" src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="شعار المنشأة">
-      {% endif %}
-      <div class="report-brand-copy">
-        <h2>{{ profile.facility_name }}</h2>
-        {% if profile.report_subtitle %}<p>{{ profile.report_subtitle }}</p>{% endif %}
-      </div>
-    </div>
-    <div class="report-title-block report-title-block-right">
-      {% if profile.authority_line_1 %}<p>{{ profile.authority_line_1 }}</p>{% endif %}
-      {% if profile.authority_line_2 %}<p>{{ profile.authority_line_2 }}</p>{% endif %}
-      {% if profile.authority_line_3 %}<p>{{ profile.authority_line_3 }}</p>{% endif %}
-    </div>
-  </header>
+  <table class="report-letterhead" aria-hidden="true">
+    <tr>
+      <td class="letterhead-right">
+        <div class="report-title-block report-title-block-right">
+          {% if profile.authority_line_1 %}<p>{{ profile.authority_line_1 }}</p>{% endif %}
+          {% if profile.authority_line_2 %}<p>{{ profile.authority_line_2 }}</p>{% endif %}
+          {% if profile.authority_line_3 %}<p>{{ profile.authority_line_3 }}</p>{% endif %}
+        </div>
+      </td>
+      <td class="letterhead-left">
+        <div class="report-brand report-brand-left">
+          {% if profile.logo_filename %}
+            <img class="report-logo" src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="شعار المنشأة">
+          {% endif %}
+          <div class="report-brand-copy">
+            <h2>{{ profile.facility_name }}</h2>
+            {% if profile.report_subtitle %}<p>{{ profile.report_subtitle }}</p>{% endif %}
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
 
   <div class="report-accent-line"></div>
 
@@ -38,8 +44,6 @@
   <table class="patient-meta-table">
     <tbody>
       <tr>
-        <th>رقم المريض</th>
-        <td>{{ patient.patient_number }}</td>
         <th>اسم المريض</th>
         <td>{{ patient.full_name }}</td>
         <th>الجنس</th>
@@ -50,20 +54,22 @@
         <td>{{ patient.date_of_birth or "غير متاح" }}</td>
         <th>العمر</th>
         <td>{{ patient_age_display }}</td>
+      </tr>
+      <tr>
+        <th>رقم المريض</th>
+        <td class="meta-id-cell">{{ patient.patient_number }}</td>
         <th>رقم التقرير</th>
-        <td>{{ report.report_number }}</td>
+        <td class="meta-id-cell">{{ report.report_number }}</td>
       </tr>
       <tr>
         <th>تاريخ التقرير</th>
         <td>{{ report.report_date }}</td>
         <th>الحالة</th>
         <td>{{ "نسخة مراجعة" if report.revision_of_report_id else "نهائي" }}</td>
-        <th>مرجع</th>
-        <td>{{ report.report_number }}</td>
       </tr>
       <tr>
         <th class="meta-notes-label">ملاحظات عامة</th>
-        <td class="meta-notes-value" colspan="5">{{ report.notes or "-" }}</td>
+        <td class="meta-notes-value" colspan="3">{{ report.notes or "-" }}</td>
       </tr>
     </tbody>
   </table>

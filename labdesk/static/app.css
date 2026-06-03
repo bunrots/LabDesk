@@ -524,14 +524,25 @@ main {
   position: relative;
 }
 
-.report-brand-header {
-  align-items: start;
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: 1fr 1fr;
-  padding: 0.05rem 0.15rem 0 0.15rem;
+.report-letterhead {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
   position: relative;
   z-index: 2;
+}
+
+.report-letterhead td {
+  padding: 0.05rem 0.15rem 0;
+  vertical-align: top;
+}
+
+.letterhead-right {
+  width: 46%;
+}
+
+.letterhead-left {
+  width: 54%;
 }
 
 .settings-creation-grid {
@@ -606,6 +617,7 @@ main {
   font-size: 0.95rem;
   font-weight: 700;
   margin: 0;
+  white-space: nowrap;
 }
 
 .report-accent-line {
@@ -682,11 +694,19 @@ main {
   background: #f1f4f7;
   font-size: 0.78rem;
   font-weight: 700;
-  width: 11%;
+  width: 14%;
 }
 
 .patient-meta-table td {
-  font-size: 0.86rem;
+  font-size: 0.84rem;
+}
+
+.meta-id-cell {
+  direction: ltr;
+  font-size: 0.76rem;
+  text-align: center;
+  unicode-bidi: plaintext;
+  word-break: break-word;
 }
 
 .meta-notes-label {
@@ -836,8 +856,7 @@ main {
   .compact-grid,
   .search-grid,
   .dob-grid,
-  .hero-stats,
-  .report-brand-header {
+  .hero-stats {
     grid-template-columns: 1fr;
   }
 
@@ -851,6 +870,19 @@ main {
   .pagination-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .report-letterhead,
+  .report-letterhead tbody,
+  .report-letterhead tr,
+  .report-letterhead td {
+    display: block;
+    width: 100%;
+  }
+
+  .report-title-block-right {
+    justify-items: end;
+    text-align: right;
   }
 
   .site-nav {
