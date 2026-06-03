@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" style="--accent: {{ site_profile.accent_color or '#0f8f83' }};">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}مكتب التقارير المخبرية{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
   </head>
-  <body style="--brand-accent: {{ site_profile.accent_color or '#0f8f83' }};">
+  <body>
     <div class="app-backdrop"></div>
     <div class="page-shell">
       <header class="site-header">
@@ -67,7 +67,7 @@
 
       function applyAccent(color) {
         if (!color) return;
-        document.body.style.setProperty("--brand-accent", color);
+        document.documentElement.style.setProperty("--accent", color);
       }
 
       document.addEventListener("click", function (event) {

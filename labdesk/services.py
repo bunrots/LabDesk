@@ -21,9 +21,9 @@ FLAG_LABELS = {
 }
 
 SECTION_TYPE_INFO = {
-    "panel": {"label": "Panel", "description": "Standard grouped tests shown as a compact result table."},
-    "structured": {"label": "Structured", "description": "For descriptive sections like urine, stool, or smear with mixed fields."},
-    "custom": {"label": "Custom", "description": "A free-text report section for special or uncommon reports."},
+    "panel": {"label": "جدولي", "description": "قسم تحاليل قياسي يعرض النتائج ضمن جدول مختصر ومنظم."},
+    "structured": {"label": "منظم", "description": "قسم وصفي منظم لتحاليل مثل البول أو البراز أو اللطاخة مع حقول متنوعة."},
+    "custom": {"label": "حر", "description": "قسم نصي حر للتقارير الخاصة أو الحالات غير المعتادة."},
 }
 
 
@@ -197,7 +197,7 @@ def _parse_optional_float(value, field_label: str):
     try:
         return float(raw)
     except ValueError as exc:
-        raise ValueError(f"{field_label} must be a valid number.") from exc
+        raise ValueError(f"{field_label} يجب أن يكون رقماً صالحاً.") from exc
 
 
 def get_default_reference_range(db, test_code: str):
@@ -211,6 +211,23 @@ def get_default_reference_range(db, test_code: str):
         """,
         (test_code,),
     ).fetchone()
+
+
+def get_specific_reference_ranges(db, test_code: str):
+    rows = db.execute(
+        """
+        SELECT *
+        FROM reference_ranges
+        WHERE test_code = ?
+          AND NOT (sex IS NULL AND min_age_days IS NULL AND max_age_days IS NULL)
+        ORDER BY
+            CASE WHEN sex IS NULL THEN 1 ELSE 0 END,
+            COALESCE(min_age_days, 0),
+            COALESCE(max_age_days, 999999)
+        """,
+        (test_code,),
+    ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def upsert_default_reference_range(db, test_code: str, low_value, high_value, reference_text_ar: str | None):
@@ -240,6 +257,94 @@ def upsert_default_reference_range(db, test_code: str, low_value, high_value, re
         )
 
 
+def _parse_optional_int(value, field_label: str):
+    raw = (value or "").strip()
+    if not raw:
+        return None
+    try:
+        return int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{field_label} يجب أن يكون رقماً صحيحاً.") from exc
+
+
+def create_specific_reference_range(db, test_code: str, form):
+    sex = (form.get("sex") or "").strip() or None
+    min_age_days = _parse_optional_int(form.get("min_age_days"), "العمر الأدنى")
+    max_age_days = _parse_optional_int(form.get("max_age_days"), "العمر الأعلى")
+    low_value = _parse_optional_float(form.get("low_value"), "الحد الأدنى")
+    high_value = _parse_optional_float(form.get("high_value"), "الحد الأعلى")
+    reference_text = (form.get("reference_text_ar") or "").strip() or None
+
+    if sex not in {None, "male", "female"}:
+        raise ValueError("قيمة الجنس المرجعي غير صالحة.")
+    if min_age_days is not None and max_age_days is not None and min_age_days > max_age_days:
+        raise ValueError("العمر الأدنى لا يمكن أن يكون أكبر من العمر الأعلى.")
+    if all(value is None for value in (low_value, high_value, reference_text)):
+        raise ValueError("أدخل قيمة مرجعية واحدة على الأقل أو مرجعاً مطبوعاً.")
+
+    db.execute(
+        """
+        INSERT INTO reference_ranges
+        (test_code, sex, min_age_days, max_age_days, low_value, high_value, reference_text_ar)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (test_code, sex, min_age_days, max_age_days, low_value, high_value, reference_text),
+    )
+    db.commit()
+
+
+def update_specific_reference_range(db, range_id: int, test_code: str, form):
+    current = db.execute(
+        """
+        SELECT *
+        FROM reference_ranges
+        WHERE id = ? AND test_code = ?
+        """,
+        (range_id, test_code),
+    ).fetchone()
+    if current is None:
+        raise ValueError("القاعدة المرجعية غير موجودة.")
+
+    sex = (form.get("sex") or "").strip() or None
+    min_age_days = _parse_optional_int(form.get("min_age_days"), "العمر الأدنى")
+    max_age_days = _parse_optional_int(form.get("max_age_days"), "العمر الأعلى")
+    low_value = _parse_optional_float(form.get("low_value"), "الحد الأدنى")
+    high_value = _parse_optional_float(form.get("high_value"), "الحد الأعلى")
+    reference_text = (form.get("reference_text_ar") or "").strip() or None
+
+    if sex not in {None, "male", "female"}:
+        raise ValueError("قيمة الجنس المرجعي غير صالحة.")
+    if min_age_days is not None and max_age_days is not None and min_age_days > max_age_days:
+        raise ValueError("العمر الأدنى لا يمكن أن يكون أكبر من العمر الأعلى.")
+    if all(value is None for value in (low_value, high_value, reference_text)):
+        raise ValueError("أدخل قيمة مرجعية واحدة على الأقل أو مرجعاً مطبوعاً.")
+
+    db.execute(
+        """
+        UPDATE reference_ranges
+        SET sex = ?, min_age_days = ?, max_age_days = ?, low_value = ?, high_value = ?, reference_text_ar = ?
+        WHERE id = ? AND test_code = ?
+        """,
+        (sex, min_age_days, max_age_days, low_value, high_value, reference_text, range_id, test_code),
+    )
+    db.commit()
+
+
+def delete_specific_reference_range(db, range_id: int, test_code: str):
+    current = db.execute(
+        """
+        SELECT *
+        FROM reference_ranges
+        WHERE id = ? AND test_code = ?
+        """,
+        (range_id, test_code),
+    ).fetchone()
+    if current is None:
+        raise ValueError("القاعدة المرجعية غير موجودة.")
+    db.execute("DELETE FROM reference_ranges WHERE id = ? AND test_code = ?", (range_id, test_code))
+    db.commit()
+
+
 def get_template_overview(db):
     sections = db.execute(
         """
@@ -261,6 +366,7 @@ def get_template_overview(db):
         row["choices"] = json.loads(row["default_choices_json"] or "[]")
         default_range = get_default_reference_range(db, row["test_code"])
         row["default_range"] = dict(default_range) if default_range is not None else None
+        row["specific_ranges"] = get_specific_reference_ranges(db, row["test_code"])
         grouped.setdefault(test["section_code"], []).append(row)
     overview = []
     for section in sections:
@@ -301,8 +407,8 @@ def create_test_definition(db, form):
     default_unit_ar = (form.get("default_unit_ar") or "").strip() or None
     choices_text = (form.get("default_choices") or "").strip()
     reference_text = (form.get("reference_text_ar") or "").strip() or None
-    low_value = _parse_optional_float(form.get("low_value"), "Low range")
-    high_value = _parse_optional_float(form.get("high_value"), "High range")
+    low_value = _parse_optional_float(form.get("low_value"), "الحد الأدنى")
+    high_value = _parse_optional_float(form.get("high_value"), "الحد الأعلى")
     if not section_code or not test_code or not label_ar or result_type not in {"numeric", "choice", "text"}:
         raise ValueError("بيانات التحليل الجديد غير مكتملة.")
     section = db.execute("SELECT 1 FROM section_templates WHERE code = ?", (section_code,)).fetchone()
@@ -391,8 +497,8 @@ def update_test_definition(db, test_id: int, form):
     default_unit_ar = (form.get("default_unit_ar") or "").strip() or None
     choices_text = (form.get("default_choices") or "").strip()
     reference_text = (form.get("reference_text_ar") or "").strip() or None
-    low_value = _parse_optional_float(form.get("low_value"), "Low range")
-    high_value = _parse_optional_float(form.get("high_value"), "High range")
+    low_value = _parse_optional_float(form.get("low_value"), "الحد الأدنى")
+    high_value = _parse_optional_float(form.get("high_value"), "الحد الأعلى")
     is_active = 1 if form.get("is_active") == "on" else 0
     if not label_ar:
         raise ValueError("اسم التحليل مطلوب.")

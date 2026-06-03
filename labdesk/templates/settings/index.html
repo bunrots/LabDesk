@@ -127,9 +127,9 @@
         <label>
           نوع القسم
           <select name="section_type" required data-section-type-select>
-            <option value="panel">Panel</option>
-            <option value="structured">Structured</option>
-            <option value="custom">Custom</option>
+            <option value="panel">{{ section_type_info['panel']['label'] }}</option>
+            <option value="structured">{{ section_type_info['structured']['label'] }}</option>
+            <option value="custom">{{ section_type_info['custom']['label'] }}</option>
           </select>
         </label>
         <div class="type-help-card" data-section-type-help>
@@ -208,9 +208,9 @@
       {% for section in templates %}
         <details class="template-card compact-template-card settings-template-card">
           <summary class="template-summary">
-            <div>
+            <div class="template-summary-copy">
               <strong>{{ section.name_ar }}</strong>
-              <p class="muted">{{ section.code }} • {{ section.active_test_count }}/{{ section.tests|length }} مفعل • {{ section.section_type }}</p>
+              <p class="muted">{{ section.code }} • {{ section.active_test_count }}/{{ section.tests|length }} مفعل • {{ section_type_info[section.section_type]['label'] }}</p>
             </div>
             <span class="section-pill">{{ "مفعل" if section.is_active else "مخفي" }}</span>
           </summary>
@@ -232,10 +232,14 @@
 
           <div class="template-test-list compact-test-list settings-test-list">
             {% for test in section.tests %}
-              <form method="post" action="{{ url_for('app.update_test_template_view', test_id=test.id) }}" class="test-editor settings-test-editor" data-test-form>
+              <div class="test-editor settings-test-editor" data-test-form>
+                <form method="post" action="{{ url_for('app.update_test_template_view', test_id=test.id) }}" class="settings-test-main-form">
                 <div class="settings-test-head">
-                  <strong>{{ test.test_code }}</strong>
-                  <label class="checkbox-label checkbox-align-end">
+                  <div>
+                    <strong>{{ test.label_ar }}</strong>
+                    <p class="muted settings-code-line">{{ test.test_code }} • {{ "رقمي" if test.result_type == "numeric" else "اختيار" if test.result_type == "choice" else "نصي" }}</p>
+                  </div>
+                  <label class="checkbox-label checkbox-align-end settings-activation-toggle">
                     <input name="is_active" type="checkbox" {% if test.is_active %}checked{% endif %}>
                     تفعيل
                   </label>
@@ -275,10 +279,60 @@
                   </label>
                 </div>
                 <div class="settings-test-footer">
-                  <span class="muted">{{ test.result_type }}</span>
+                  <span class="muted">{{ "حقول مرجعية ووحدة" if test.result_type == "numeric" else "خيارات جاهزة" if test.result_type == "choice" else "إدخال نصي حر" }}</span>
                   <button type="submit">حفظ التحليل</button>
                 </div>
-              </form>
+                </form>
+                {% if test.result_type == "numeric" %}
+                  <details class="range-manager">
+                    <summary>مدى مرجعي متقدم حسب الجنس أو العمر</summary>
+                    <div class="range-manager-body">
+                      <p class="muted range-manager-note">هذا الخيار اختياري. استخدمه فقط عندما يختلف المرجع بين الذكور والإناث أو بين الأعمار.</p>
+                      <div class="range-stack">
+                        {% for range in test.specific_ranges %}
+                          <div class="range-row-shell">
+                            <form method="post" action="{{ url_for('app.update_reference_range_view', test_code=test.test_code, range_id=range.id) }}" class="range-row">
+                              <select name="sex">
+                                <option value="" {% if not range.sex %}selected{% endif %}>الكل</option>
+                                <option value="male" {% if range.sex == "male" %}selected{% endif %}>ذكر</option>
+                                <option value="female" {% if range.sex == "female" %}selected{% endif %}>أنثى</option>
+                              </select>
+                              <input name="min_age_days" type="number" min="0" step="1" value="{{ range.min_age_days if range.min_age_days is not none else '' }}" placeholder="العمر من/يوم">
+                              <input name="max_age_days" type="number" min="0" step="1" value="{{ range.max_age_days if range.max_age_days is not none else '' }}" placeholder="العمر إلى/يوم">
+                              <input name="low_value" type="number" step="any" value="{{ range.low_value if range.low_value is not none else '' }}" placeholder="الحد الأدنى">
+                              <input name="high_value" type="number" step="any" value="{{ range.high_value if range.high_value is not none else '' }}" placeholder="الحد الأعلى">
+                              <input name="reference_text_ar" type="text" value="{{ range.reference_text_ar or '' }}" placeholder="مرجع مطبوع">
+                              <div class="range-row-actions">
+                                <button type="submit" class="button compact-action">حفظ</button>
+                              </div>
+                            </form>
+                            <form method="post" action="{{ url_for('app.delete_reference_range_view', test_code=test.test_code, range_id=range.id) }}">
+                              <button type="submit" class="button ghost danger-outline compact-action">حذف</button>
+                            </form>
+                          </div>
+                        {% else %}
+                          <p class="empty-state compact-empty-state">لا توجد قواعد مخصصة بعد.</p>
+                        {% endfor %}
+                        <form method="post" action="{{ url_for('app.create_reference_range_view', test_code=test.test_code) }}" class="range-row range-row-new">
+                          <select name="sex">
+                            <option value="">الكل</option>
+                            <option value="male">ذكر</option>
+                            <option value="female">أنثى</option>
+                          </select>
+                          <input name="min_age_days" type="number" min="0" step="1" placeholder="العمر من/يوم">
+                          <input name="max_age_days" type="number" min="0" step="1" placeholder="العمر إلى/يوم">
+                          <input name="low_value" type="number" step="any" placeholder="الحد الأدنى">
+                          <input name="high_value" type="number" step="any" placeholder="الحد الأعلى">
+                          <input name="reference_text_ar" type="text" placeholder="مرجع مطبوع">
+                          <div class="range-row-actions">
+                            <button type="submit" class="button compact-action">إضافة</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </details>
+                {% endif %}
+              </div>
             {% else %}
               <p class="empty-state">لا توجد تحاليل معرفة لهذا القسم بعد.</p>
             {% endfor %}

@@ -15,10 +15,12 @@ from .services import (
     cancel_draft_report,
     age_summary,
     create_section_template,
+    create_specific_reference_range,
     create_patient,
     create_report,
     create_revision,
     create_test_definition,
+    delete_specific_reference_range,
     delete_section,
     finalize_report,
     get_catalog,
@@ -36,6 +38,7 @@ from .services import (
     search_patients,
     update_lab_profile,
     update_report,
+    update_specific_reference_range,
     update_section_template,
     update_test_definition,
 )
@@ -410,6 +413,39 @@ def update_test_template_view(test_id: int):
     try:
         update_test_definition(db, test_id, request.form)
         flash("تم تحديث التحليل.", "success")
+    except ValueError as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("app.settings"))
+
+
+@bp.post("/settings/templates/tests/<test_code>/ranges")
+def create_reference_range_view(test_code: str):
+    db = get_db()
+    try:
+        create_specific_reference_range(db, test_code, request.form)
+        flash("تمت إضافة قاعدة مرجعية مخصصة.", "success")
+    except ValueError as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("app.settings"))
+
+
+@bp.post("/settings/templates/tests/<test_code>/ranges/<int:range_id>")
+def update_reference_range_view(test_code: str, range_id: int):
+    db = get_db()
+    try:
+        update_specific_reference_range(db, range_id, test_code, request.form)
+        flash("تم تحديث القاعدة المرجعية.", "success")
+    except ValueError as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("app.settings"))
+
+
+@bp.post("/settings/templates/tests/<test_code>/ranges/<int:range_id>/delete")
+def delete_reference_range_view(test_code: str, range_id: int):
+    db = get_db()
+    try:
+        delete_specific_reference_range(db, range_id, test_code)
+        flash("تم حذف القاعدة المرجعية.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(url_for("app.settings"))
