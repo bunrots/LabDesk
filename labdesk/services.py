@@ -35,14 +35,13 @@ def parse_iso_date(value: str | None):
 
 
 def build_iso_dob(form) -> str | None:
-    if form.get("date_of_birth"):
-        return form.get("date_of_birth")
-
     day = (form.get("dob_day") or "").strip()
     month = (form.get("dob_month") or "").strip()
     year = (form.get("dob_year") or "").strip()
     if not any([day, month, year]):
         return None
+    if not all([day, month, year]):
+        raise ValueError("يجب اختيار اليوم والشهر والسنة بالكامل.")
     try:
         dob = date(int(year), int(month), int(day))
     except (TypeError, ValueError):
@@ -97,23 +96,31 @@ def update_lab_profile(db, form, logo_filename: str | None = None):
         "facility_name": (form.get("facility_name") or profile["facility_name"]).strip(),
         "report_title": (form.get("report_title") or profile["report_title"]).strip(),
         "report_subtitle": (form.get("report_subtitle") or profile["report_subtitle"] or "").strip() or None,
+        "authority_line_1": (form.get("authority_line_1") or profile["authority_line_1"] or "").strip() or None,
+        "authority_line_2": (form.get("authority_line_2") or profile["authority_line_2"] or "").strip() or None,
+        "authority_line_3": (form.get("authority_line_3") or profile["authority_line_3"] or "").strip() or None,
         "header_notes": (form.get("header_notes") or profile["header_notes"] or "").strip() or None,
         "footer_text": (form.get("footer_text") or profile["footer_text"] or "").strip() or None,
         "logo_filename": profile["logo_filename"] if logo_filename is None else (logo_filename or None),
+        "accent_color": (form.get("accent_color") or profile["accent_color"] or "").strip() or "#0f8f83",
     }
     db.execute(
         """
         UPDATE lab_profile
-        SET facility_name = ?, report_title = ?, report_subtitle = ?, header_notes = ?, footer_text = ?, logo_filename = ?, updated_at = CURRENT_TIMESTAMP
+        SET facility_name = ?, report_title = ?, report_subtitle = ?, authority_line_1 = ?, authority_line_2 = ?, authority_line_3 = ?, header_notes = ?, footer_text = ?, logo_filename = ?, accent_color = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = 1
         """,
         (
             values["facility_name"],
             values["report_title"],
             values["report_subtitle"],
+            values["authority_line_1"],
+            values["authority_line_2"],
+            values["authority_line_3"],
             values["header_notes"],
             values["footer_text"],
             values["logo_filename"],
+            values["accent_color"],
         ),
     )
     db.commit()
@@ -190,8 +197,32 @@ def get_template_overview(db):
     for section in sections:
         item = dict(section)
         item["tests"] = grouped.get(section["code"], [])
+        item["active_test_count"] = sum(1 for test in item["tests"] if test["is_active"])
         overview.append(item)
     return overview
+
+
+def get_patient_reports(db, patient_id: int):
+    return db.execute(
+        """
+        SELECT *
+        FROM reports
+        WHERE patient_id = ?
+        ORDER BY report_date DESC, id DESC
+        """,
+        (patient_id,),
+    ).fetchall()
+
+
+def get_dashboard_summary(db):
+    return db.execute(
+        """
+        SELECT
+            (SELECT COUNT(*) FROM reports WHERE report_date = DATE('now', 'localtime')) AS reports_today,
+            (SELECT COUNT(*) FROM reports WHERE status = 'draft') AS draft_reports,
+            (SELECT COUNT(*) FROM patients) AS patient_count
+        """
+    ).fetchone()
 
 
 def update_section_template(db, section_code: str, form):

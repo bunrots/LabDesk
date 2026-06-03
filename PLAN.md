@@ -7,7 +7,7 @@ Deliver a standalone Arabic-first lab reporting desk for small teams that need f
 ## MVP Scope
 
 - Patient search and creation
-- DOB-only patient intake with day/month/year entry or direct date input
+- DOB-only patient intake with day/month/year selection
 - Draft report creation linked to one patient
 - One report containing one or more report sections
 - Seeded Arabic section catalog for the lab's current tests
@@ -17,6 +17,7 @@ Deliver a standalone Arabic-first lab reporting desk for small teams that need f
 - Revision flow that creates a new draft from a finalized report
 - Name-first workflow with timestamp-random internal patient/report identifiers
 - Settings-backed lab branding and basic template management
+- Patient-level report history page
 
 ## Explicitly Deferred
 

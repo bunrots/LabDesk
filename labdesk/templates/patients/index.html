@@ -1,20 +1,28 @@
 {% extends "base.html" %}
-{% block title %}المرضى{% endblock %}
+{% block title %}الاستقبال{% endblock %}
 {% block content %}
-  <section class="hero-card hero-card-wide">
+  <section class="hero-card hero-card-wide hero-card-tight">
     <div>
-      <p class="eyebrow">واجهة الاستقبال</p>
-      <h2>بحث سريع ثم إصدار تقرير مباشر</h2>
-      <p>الواجهة مهيأة للفني: ابحث باسم المريض، اختر السجل المناسب، ثم ابدأ التقرير خلال خطوة واحدة.</p>
+      <p class="eyebrow">الاستقبال</p>
+      <h2>بحث عن مريض أو إضافة مريض جديد</h2>
+      <p>المسار المقصود: ابحث أولاً، وإن لم تجد المريض أضفه، ثم افتح ملفه أو أنشئ تقريراً جديداً.</p>
     </div>
     <div class="hero-stats">
       <div class="stat-card">
-        <strong>{{ patients|length }}</strong>
-        <span>نتيجة ظاهرة</span>
+        <strong>{{ summary["reports_today"] }}</strong>
+        <span>تقارير اليوم</span>
       </div>
       <div class="stat-card">
-        <strong>{{ recent_reports|length }}</strong>
-        <span>تقارير حديثة</span>
+        <strong>{{ summary["draft_reports"] }}</strong>
+        <span>مسودات مفتوحة</span>
+      </div>
+      <div class="stat-card">
+        <strong>{{ summary["patient_count"] }}</strong>
+        <span>إجمالي المرضى</span>
+      </div>
+      <div class="stat-card">
+        <strong>{{ patients|length }}</strong>
+        <span>نتائج البحث</span>
       </div>
     </div>
   </section>
@@ -23,8 +31,8 @@
     <section class="panel panel-highlight">
       <div class="panel-heading">
         <div>
-          <p class="eyebrow">خطوة 1</p>
-          <h3>ابحث عن مريض موجود</h3>
+          <p class="eyebrow">1. بحث</p>
+          <h3>ابحث عن ملف مريض</h3>
         </div>
       </div>
       <form class="stack-form" method="get">
@@ -48,7 +56,10 @@
                 <p>تاريخ الميلاد: {{ patient["row"]["date_of_birth"] or "غير متاح" }}</p>
                 <p>العمر الحالي: {{ patient.age_display }}</p>
               </div>
-              <a class="button secondary" href="{{ url_for('app.new_report', patient_id=patient['row']['id']) }}">تقرير جديد</a>
+              <div class="patient-card-actions">
+                <a class="button ghost" href="{{ url_for('app.patient_detail', patient_id=patient['row']['id']) }}">فتح الملف</a>
+                <a class="button secondary" href="{{ url_for('app.new_report', patient_id=patient['row']['id']) }}">تقرير جديد</a>
+              </div>
             </article>
           {% endfor %}
         </div>
@@ -60,7 +71,7 @@
     <section class="panel">
       <div class="panel-heading">
         <div>
-          <p class="eyebrow">خطوة 2</p>
+          <p class="eyebrow">2. إضافة</p>
           <h3>أضف مريضاً جديداً</h3>
         </div>
         <span class="muted">ينتقل مباشرة إلى إنشاء التقرير</span>
@@ -89,21 +100,32 @@
           <div class="dob-grid">
             <label>
               اليوم
-              <input name="dob_day" type="number" min="1" max="31" placeholder="DD">
+              <select name="dob_day" required>
+                <option value="">اليوم</option>
+                {% for day in dob_days %}
+                  <option value="{{ day }}">{{ day }}</option>
+                {% endfor %}
+              </select>
             </label>
             <label>
               الشهر
-              <input name="dob_month" type="number" min="1" max="12" placeholder="MM">
+              <select name="dob_month" required>
+                <option value="">الشهر</option>
+                {% for month_value, month_label in dob_months %}
+                  <option value="{{ month_value }}">{{ month_label }}</option>
+                {% endfor %}
+              </select>
             </label>
             <label>
               السنة
-              <input name="dob_year" type="number" min="1900" max="2100" placeholder="YYYY">
+              <select name="dob_year" required>
+                <option value="">السنة</option>
+                {% for year in dob_years %}
+                  <option value="{{ year }}">{{ year }}</option>
+                {% endfor %}
+              </select>
             </label>
           </div>
-          <label>
-            أو أدخل التاريخ مباشرة
-            <input name="date_of_birth" type="date" max="{{ today }}">
-          </label>
         </fieldset>
         <label>
           ملاحظات
@@ -117,7 +139,7 @@
   <section class="panel">
     <div class="panel-heading">
       <div>
-        <p class="eyebrow">وصول سريع</p>
+        <p class="eyebrow">آخر ما تم</p>
         <h3>آخر التقارير</h3>
       </div>
     </div>

@@ -18,9 +18,11 @@ from .services import (
     delete_section,
     finalize_report,
     get_catalog,
+    get_dashboard_summary,
     get_history,
     get_lab_profile,
     get_patient,
+    get_patient_reports,
     get_recent_reports,
     get_report_bundle,
     get_template_overview,
@@ -34,6 +36,29 @@ from .services import (
 
 
 bp = Blueprint("app", __name__)
+
+
+def _dob_context():
+    current_year = date.today().year
+    return {
+        "dob_days": [f"{day:02d}" for day in range(1, 32)],
+        "dob_months": [(f"{month:02d}", label) for month, label in enumerate([
+            "",
+            "كانون الثاني",
+            "شباط",
+            "آذار",
+            "نيسان",
+            "أيار",
+            "حزيران",
+            "تموز",
+            "آب",
+            "أيلول",
+            "تشرين الأول",
+            "تشرين الثاني",
+            "كانون الأول",
+        ]) if month],
+        "dob_years": [str(year) for year in range(current_year, current_year - 110, -1)],
+    }
 
 
 def _logo_upload_dir() -> str:
@@ -84,6 +109,7 @@ def patients_index():
     query = request.args.get("q", "").strip()
     patients = search_patients(db, query)
     recent_reports = get_recent_reports(db)
+    summary = get_dashboard_summary(db)
     patient_cards = []
     for patient in patients:
         patient_cards.append(
@@ -97,7 +123,27 @@ def patients_index():
         patients=patient_cards,
         query=query,
         recent_reports=recent_reports,
+        summary=summary,
         today=date.today().isoformat(),
+        sex_labels=SEX_LABELS,
+        **_dob_context(),
+    )
+
+
+@bp.route("/patients/<int:patient_id>")
+def patient_detail(patient_id: int):
+    db = get_db()
+    patient = get_patient(db, patient_id)
+    if patient is None:
+        flash("المريض غير موجود.", "error")
+        return redirect(url_for("app.patients_index"))
+
+    reports = get_patient_reports(db, patient_id)
+    return render_template(
+        "patients/show.html",
+        patient=patient,
+        reports=reports,
+        patient_age_display=age_summary(patient),
         sex_labels=SEX_LABELS,
     )
 
@@ -283,6 +329,13 @@ def settings():
         "settings/index.html",
         profile=profile,
         templates=templates,
+        accent_presets=[
+            "#0f8f83",
+            "#155b9c",
+            "#0f6f5a",
+            "#6b7280",
+            "#8a5b16",
+        ],
     )
 
 

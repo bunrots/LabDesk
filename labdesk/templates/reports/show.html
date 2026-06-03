@@ -9,6 +9,7 @@
       </div>
       <div class="action-row">
         <button class="js-print-trigger" data-log-url="{{ url_for('app.report_print_log', report_id=bundle.report.id) }}" type="button">طباعة</button>
+        <a class="button ghost" href="{{ url_for('app.patient_detail', patient_id=bundle.patient.id) }}">ملف المريض</a>
         <form method="post" action="{{ url_for('app.revise_report', report_id=bundle.report.id) }}">
           <button class="button secondary" type="submit">إنشاء نسخة مراجعة</button>
         </form>

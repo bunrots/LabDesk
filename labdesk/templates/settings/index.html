@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}الإعدادات{% endblock %}
 {% block content %}
-  <section class="hero-card hero-card-wide">
+  <section class="hero-card hero-card-wide hero-card-tight">
     <div>
       <p class="eyebrow">إدارة النظام</p>
       <h2>إعدادات المخبر وقوالب التقارير</h2>
@@ -30,10 +30,35 @@
           عنوان فرعي
           <input name="report_subtitle" type="text" value="{{ profile.report_subtitle or '' }}">
         </label>
+        <div class="grid compact-grid">
+          <label>
+            السطر الرسمي الأول
+            <input name="authority_line_1" type="text" value="{{ profile.authority_line_1 or '' }}">
+          </label>
+          <label>
+            السطر الرسمي الثاني
+            <input name="authority_line_2" type="text" value="{{ profile.authority_line_2 or '' }}">
+          </label>
+        </div>
+        <label>
+          السطر الرسمي الثالث
+          <input name="authority_line_3" type="text" value="{{ profile.authority_line_3 or '' }}">
+        </label>
         <label>
           سطر وصفي أعلى التقرير
           <textarea name="header_notes" rows="3">{{ profile.header_notes or '' }}</textarea>
         </label>
+        <div class="grid compact-grid">
+          <label>
+            لون التمييز
+            <input name="accent_color" type="color" value="{{ profile.accent_color or '#0f8f83' }}">
+          </label>
+          <div class="accent-preset-list">
+            {% for color in accent_presets %}
+              <button class="accent-swatch" type="button" data-accent-swatch="{{ color }}" style="--swatch-color: {{ color }};"></button>
+            {% endfor %}
+          </div>
+        </div>
         <label>
           تذييل التقرير
           <textarea name="footer_text" rows="4">{{ profile.footer_text or '' }}</textarea>
@@ -65,12 +90,9 @@
         {% endif %}
         <h4>{{ profile.facility_name }}</h4>
         <p>{{ profile.report_title }}</p>
-        {% if profile.report_subtitle %}
-          <p>{{ profile.report_subtitle }}</p>
-        {% endif %}
-        {% if profile.header_notes %}
-          <p class="muted">{{ profile.header_notes }}</p>
-        {% endif %}
+        {% if profile.authority_line_1 %}<p>{{ profile.authority_line_1 }}</p>{% endif %}
+        {% if profile.authority_line_2 %}<p>{{ profile.authority_line_2 }}</p>{% endif %}
+        {% if profile.authority_line_3 %}<p>{{ profile.authority_line_3 }}</p>{% endif %}
       </div>
     </section>
   </div>
@@ -83,9 +105,16 @@
       </div>
     </div>
 
-    <div class="template-stack">
+    <div class="template-stack compact-template-stack">
       {% for section in templates %}
-        <article class="template-card">
+        <details class="template-card compact-template-card">
+          <summary class="template-summary">
+            <div>
+              <strong>{{ section.name_ar }}</strong>
+              <p class="muted">{{ section.code }} • {{ section.active_test_count }}/{{ section.tests|length }} مفعل</p>
+            </div>
+            <span class="section-pill">{{ "مفعل" if section.is_active else "مخفي" }}</span>
+          </summary>
           <form method="post" action="{{ url_for('app.update_section_template_view', section_code=section.code) }}" class="stack-form">
             <div class="panel-heading">
               <div>
@@ -106,7 +135,7 @@
             </div>
           </form>
 
-          <div class="template-test-list">
+          <div class="template-test-list compact-test-list">
             {% for test in section.tests %}
               <form method="post" action="{{ url_for('app.update_test_template_view', test_id=test.id) }}" class="test-editor">
                 <div class="grid template-test-grid">
@@ -144,7 +173,7 @@
               <p class="empty-state">لا توجد تحاليل معرفة لهذا القسم بعد.</p>
             {% endfor %}
           </div>
-        </article>
+        </details>
       {% endfor %}
     </div>
   </section>

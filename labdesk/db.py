@@ -112,9 +112,13 @@ CREATE TABLE IF NOT EXISTS lab_profile (
     facility_name TEXT NOT NULL,
     report_title TEXT NOT NULL,
     report_subtitle TEXT,
+    authority_line_1 TEXT,
+    authority_line_2 TEXT,
+    authority_line_3 TEXT,
     header_notes TEXT,
     footer_text TEXT,
     logo_filename TEXT,
+    accent_color TEXT,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 """
@@ -125,9 +129,13 @@ DEFAULT_PROFILE = {
     "facility_name": "المخبر الطبي",
     "report_title": "نتائج التحاليل المخبرية",
     "report_subtitle": "Laboratory Results",
-    "header_notes": "سجل سريع لإصدار النتائج ومراجعتها",
+    "authority_line_1": "",
+    "authority_line_2": "",
+    "authority_line_3": "",
+    "header_notes": "",
     "footer_text": "اسم الفني: __________    التوقيع: __________    الختم: __________",
     "logo_filename": None,
+    "accent_color": "#0f8f83",
 }
 
 
@@ -172,6 +180,16 @@ def run_migrations(db: sqlite3.Connection) -> None:
         db.execute("ALTER TABLE test_definitions ADD COLUMN default_choices_json TEXT")
     if "is_active" not in test_columns:
         db.execute("ALTER TABLE test_definitions ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1")
+
+    profile_columns = _table_columns(db, "lab_profile")
+    if "authority_line_1" not in profile_columns:
+        db.execute("ALTER TABLE lab_profile ADD COLUMN authority_line_1 TEXT")
+    if "authority_line_2" not in profile_columns:
+        db.execute("ALTER TABLE lab_profile ADD COLUMN authority_line_2 TEXT")
+    if "authority_line_3" not in profile_columns:
+        db.execute("ALTER TABLE lab_profile ADD COLUMN authority_line_3 TEXT")
+    if "accent_color" not in profile_columns:
+        db.execute("ALTER TABLE lab_profile ADD COLUMN accent_color TEXT")
 
 
 def init_db() -> None:
@@ -224,11 +242,30 @@ def seed_db(db: sqlite3.Connection) -> None:
         db.execute(
             """
             INSERT INTO lab_profile
-            (id, facility_name, report_title, report_subtitle, header_notes, footer_text, logo_filename)
+            (id, facility_name, report_title, report_subtitle, authority_line_1, authority_line_2, authority_line_3, header_notes, footer_text, logo_filename, accent_color)
             VALUES
-            (:id, :facility_name, :report_title, :report_subtitle, :header_notes, :footer_text, :logo_filename)
+            (:id, :facility_name, :report_title, :report_subtitle, :authority_line_1, :authority_line_2, :authority_line_3, :header_notes, :footer_text, :logo_filename, :accent_color)
             """,
             DEFAULT_PROFILE,
+        )
+    else:
+        db.execute(
+            """
+            UPDATE lab_profile
+            SET accent_color = COALESCE(accent_color, ?),
+                authority_line_1 = COALESCE(authority_line_1, ?),
+                authority_line_2 = COALESCE(authority_line_2, ?),
+                authority_line_3 = COALESCE(authority_line_3, ?),
+                header_notes = COALESCE(header_notes, ?)
+            WHERE id = 1
+            """,
+            (
+                DEFAULT_PROFILE["accent_color"],
+                DEFAULT_PROFILE["authority_line_1"],
+                DEFAULT_PROFILE["authority_line_2"],
+                DEFAULT_PROFILE["authority_line_3"],
+                DEFAULT_PROFILE["header_notes"],
+            ),
         )
 
 

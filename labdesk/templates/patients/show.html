@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}ملف المريض{% endblock %}
+{% block content %}
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">ملف المريض</p>
+        <h2>{{ patient.full_name }}</h2>
+      </div>
+      <div class="action-row">
+        <a class="button secondary" href="{{ url_for('app.new_report', patient_id=patient.id) }}">تقرير جديد</a>
+        <a class="button ghost" href="{{ url_for('app.patients_index', q=patient.full_name) }}">العودة للبحث</a>
+      </div>
+    </div>
+    <div class="summary-strip">
+      <span>{{ patient.patient_number }}</span>
+      <span>{{ sex_labels[patient.sex] }}</span>
+      <span>{{ patient.date_of_birth or "غير متاح" }}</span>
+      <span>{{ patient_age_display }}</span>
+      {% if patient.phone %}<span>{{ patient.phone }}</span>{% endif %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">التقارير</p>
+        <h3>كل التقارير الخاصة بهذا المريض</h3>
+      </div>
+      <span class="muted">{{ reports|length }} تقرير</span>
+    </div>
+    {% if reports %}
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>رقم التقرير</th>
+            <th>التاريخ</th>
+            <th>الحالة</th>
+            <th>طباعات</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in reports %}
+            <tr>
+              <td>{{ report.report_number }}</td>
+              <td>{{ report.report_date }}</td>
+              <td>{{ "نهائي" if report.status == "final" else "مسودة" }}</td>
+              <td>{{ report.print_count }}</td>
+              <td>
+                <a href="{{ url_for('app.show_report' if report.status == 'final' else 'app.edit_report', report_id=report.id) }}">
+                  {{ "عرض" if report.status == "final" else "تحرير" }}
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty-state">لا توجد تقارير لهذا المريض بعد.</p>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -19,11 +19,11 @@ The app initializes its SQLite database automatically inside `instance/labdesk.s
 
 ## Current MVP Features
 
-- Patient search and patient creation with DOB-only intake
+- Patient search, patient-file view, and patient creation with strict DOB selectors
 - Draft report creation
 - Multi-section report editing from a seeded Arabic catalog
 - Numeric, choice, and text result fields
 - Reference range lookup with high/low highlighting for common numeric analytes
 - Preview, finalize, stable snapshot storage, and browser printing
 - Report history and revision creation
-- Settings page for facility name, logo, footer text, and template activation/renaming
+- Settings page for facility branding, accent color, official print-header lines, and compact template activation/renaming

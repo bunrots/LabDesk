@@ -6,7 +6,7 @@
     <title>{% block title %}مكتب التقارير المخبرية{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
   </head>
-  <body>
+  <body style="--brand-accent: {{ site_profile.accent_color or '#0f8f83' }};">
     <div class="app-backdrop"></div>
     <div class="page-shell">
       <header class="site-header">
@@ -63,6 +63,13 @@
           const customWrap = document.querySelector("[data-custom-name]");
           if (customWrap) customWrap.hidden = event.target.value !== "custom";
         }
+      });
+
+      document.addEventListener("click", function (event) {
+        const swatch = event.target.closest("[data-accent-swatch]");
+        if (!swatch) return;
+        const colorInput = document.querySelector("[name='accent_color']");
+        if (colorInput) colorInput.value = swatch.dataset.accentSwatch;
       });
     </script>
   </body>
