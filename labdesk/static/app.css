@@ -525,26 +525,36 @@ main {
 }
 
 .report-letterhead {
-  border-collapse: collapse;
+  align-items: flex-start;
   direction: ltr;
-  table-layout: fixed;
-  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
   position: relative;
+  width: 100%;
   z-index: 2;
 }
 
-.report-letterhead td {
+.letterhead-left,
+.letterhead-right {
   direction: rtl;
-  padding: 0.05rem 0.15rem 0;
-  vertical-align: top;
+  flex: 0 0 auto;
 }
 
 .letterhead-left {
-  width: 54%;
+  display: flex;
+  justify-content: flex-start;
+  margin-left: 0;
+  margin-right: auto;
+  text-align: left;
 }
 
 .letterhead-right {
-  width: 46%;
+  display: flex;
+  justify-content: flex-end;
+  margin-left: auto;
+  margin-right: 0;
+  text-align: right;
 }
 
 .settings-creation-grid {
@@ -572,7 +582,7 @@ main {
 
 .report-brand {
   align-items: center;
-  display: flex;
+  display: inline-flex;
   gap: 0.85rem;
 }
 
@@ -612,6 +622,7 @@ main {
   display: grid;
   gap: 0.18rem;
   justify-items: end;
+  min-width: max-content;
   text-align: right;
 }
 
