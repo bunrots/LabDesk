@@ -7,13 +7,6 @@
 
   <table class="report-letterhead" aria-hidden="true">
     <tr>
-      <td class="letterhead-right">
-        <div class="report-title-block report-title-block-right">
-          {% if profile.authority_line_1 %}<p>{{ profile.authority_line_1 }}</p>{% endif %}
-          {% if profile.authority_line_2 %}<p>{{ profile.authority_line_2 }}</p>{% endif %}
-          {% if profile.authority_line_3 %}<p>{{ profile.authority_line_3 }}</p>{% endif %}
-        </div>
-      </td>
       <td class="letterhead-left">
         <div class="report-brand report-brand-left">
           {% if profile.logo_filename %}
@@ -23,6 +16,13 @@
             <h2>{{ profile.facility_name }}</h2>
             {% if profile.report_subtitle %}<p>{{ profile.report_subtitle }}</p>{% endif %}
           </div>
+        </div>
+      </td>
+      <td class="letterhead-right">
+        <div class="report-title-block report-title-block-right">
+          {% if profile.authority_line_1 %}<p>{{ profile.authority_line_1 }}</p>{% endif %}
+          {% if profile.authority_line_2 %}<p>{{ profile.authority_line_2 }}</p>{% endif %}
+          {% if profile.authority_line_3 %}<p>{{ profile.authority_line_3 }}</p>{% endif %}
         </div>
       </td>
     </tr>

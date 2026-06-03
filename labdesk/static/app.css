@@ -526,6 +526,7 @@ main {
 
 .report-letterhead {
   border-collapse: collapse;
+  direction: ltr;
   table-layout: fixed;
   width: 100%;
   position: relative;
@@ -533,16 +534,17 @@ main {
 }
 
 .report-letterhead td {
+  direction: rtl;
   padding: 0.05rem 0.15rem 0;
   vertical-align: top;
 }
 
-.letterhead-right {
-  width: 46%;
-}
-
 .letterhead-left {
   width: 54%;
+}
+
+.letterhead-right {
+  width: 46%;
 }
 
 .settings-creation-grid {
