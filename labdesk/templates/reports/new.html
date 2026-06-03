@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}تقرير جديد{% endblock %}
+{% block content %}
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">إنشاء مسودة</p>
+        <h2>تقرير جديد للمريض {{ patient.full_name }}</h2>
+      </div>
+      <a class="button ghost" href="{{ url_for('app.patients_index', q=patient.full_name) }}">العودة إلى المرضى</a>
+    </div>
+
+    <div class="summary-strip">
+      <span>{{ patient.patient_number }}</span>
+      <span>{{ sex_labels[patient.sex] }}</span>
+      <span>{{ patient.date_of_birth }}</span>
+      <span>{{ patient_age_display }}</span>
+    </div>
+
+    <form method="post" class="stack-form slim-form">
+      <input type="hidden" name="patient_id" value="{{ patient.id }}">
+      <div class="grid compact-grid">
+        <label>
+          تاريخ التقرير
+          <input name="report_date" type="date" value="{{ today }}" required>
+        </label>
+      </div>
+      <label>
+        ملاحظات عامة
+        <textarea name="notes" rows="3" placeholder="اختياري"></textarea>
+      </label>
+      <div class="action-row">
+        <button type="submit">إنشاء المسودة</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

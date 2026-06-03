@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}معاينة التقرير{% endblock %}
+{% block content %}
+  <section class="panel print-actions no-print">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">معاينة نهائية قبل الاعتماد</p>
+        <h2>معاينة التقرير {{ bundle.report.report_number }}</h2>
+      </div>
+      <div class="action-row">
+        <a class="button ghost" href="{{ url_for('app.edit_report', report_id=bundle.report.id) }}">العودة للتحرير</a>
+        {% if bundle.report.status == "draft" %}
+          <form method="post" action="{{ url_for('app.finalize_report_view', report_id=bundle.report.id) }}">
+            <button type="submit">اعتماد التقرير</button>
+          </form>
+        {% else %}
+          <a class="button secondary" href="{{ url_for('app.show_report', report_id=bundle.report.id) }}">فتح النسخة النهائية</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="print-sheet">
+    {% set report = bundle.report %}
+    {% set patient = bundle.patient %}
+    {% set profile = bundle.profile %}
+    {% set sections = bundle.sections %}
+    {% set patient_age_display = bundle.patient_age_display %}
+    {% include "reports/_print_document.html" with context %}
+  </section>
+{% endblock %}

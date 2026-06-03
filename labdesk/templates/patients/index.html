@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}المرضى{% endblock %}
+{% block content %}
+  <section class="hero-card hero-card-wide">
+    <div>
+      <p class="eyebrow">واجهة الاستقبال</p>
+      <h2>بحث سريع ثم إصدار تقرير مباشر</h2>
+      <p>الواجهة مهيأة للفني: ابحث باسم المريض، اختر السجل المناسب، ثم ابدأ التقرير خلال خطوة واحدة.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-card">
+        <strong>{{ patients|length }}</strong>
+        <span>نتيجة ظاهرة</span>
+      </div>
+      <div class="stat-card">
+        <strong>{{ recent_reports|length }}</strong>
+        <span>تقارير حديثة</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid two-columns">
+    <section class="panel panel-highlight">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">خطوة 1</p>
+          <h3>ابحث عن مريض موجود</h3>
+        </div>
+      </div>
+      <form class="stack-form" method="get">
+        <label for="q">
+          اسم المريض
+          <input id="q" name="q" type="search" value="{{ query }}" placeholder="اكتب الاسم ثم اضغط بحث">
+        </label>
+        <div class="action-row">
+          <button type="submit">بحث</button>
+          <a class="button ghost" href="{{ url_for('app.patients_index') }}">إعادة ضبط</a>
+        </div>
+      </form>
+
+      {% if patients %}
+        <div class="patient-list">
+          {% for patient in patients %}
+            <article class="patient-card">
+              <div>
+                <h4>{{ patient["row"]["full_name"] }}</h4>
+                <p>{{ patient["row"]["patient_number"] }} • {{ sex_labels[patient["row"]["sex"]] }}</p>
+                <p>تاريخ الميلاد: {{ patient["row"]["date_of_birth"] or "غير متاح" }}</p>
+                <p>العمر الحالي: {{ patient.age_display }}</p>
+              </div>
+              <a class="button secondary" href="{{ url_for('app.new_report', patient_id=patient['row']['id']) }}">تقرير جديد</a>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">لا توجد نتائج مطابقة حالياً.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">خطوة 2</p>
+          <h3>أضف مريضاً جديداً</h3>
+        </div>
+        <span class="muted">ينتقل مباشرة إلى إنشاء التقرير</span>
+      </div>
+      <form method="post" class="stack-form">
+        <label>
+          اسم المريض
+          <input name="full_name" type="text" required>
+        </label>
+        <div class="grid compact-grid">
+          <label>
+            الجنس
+            <select name="sex">
+              <option value="unknown">غير محدد</option>
+              <option value="male">ذكر</option>
+              <option value="female">أنثى</option>
+            </select>
+          </label>
+          <label>
+            الهاتف
+            <input name="phone" type="text" inputmode="tel">
+          </label>
+        </div>
+        <fieldset class="dob-fieldset">
+          <legend>تاريخ الميلاد</legend>
+          <div class="dob-grid">
+            <label>
+              اليوم
+              <input name="dob_day" type="number" min="1" max="31" placeholder="DD">
+            </label>
+            <label>
+              الشهر
+              <input name="dob_month" type="number" min="1" max="12" placeholder="MM">
+            </label>
+            <label>
+              السنة
+              <input name="dob_year" type="number" min="1900" max="2100" placeholder="YYYY">
+            </label>
+          </div>
+          <label>
+            أو أدخل التاريخ مباشرة
+            <input name="date_of_birth" type="date" max="{{ today }}">
+          </label>
+        </fieldset>
+        <label>
+          ملاحظات
+          <textarea name="notes" rows="3"></textarea>
+        </label>
+        <button type="submit">حفظ المريض والبدء بالتقرير</button>
+      </form>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">وصول سريع</p>
+        <h3>آخر التقارير</h3>
+      </div>
+    </div>
+    {% if recent_reports %}
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>رقم التقرير</th>
+            <th>المريض</th>
+            <th>التاريخ</th>
+            <th>الحالة</th>
+            <th>طباعات</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in recent_reports %}
+            <tr>
+              <td>{{ report.report_number }}</td>
+              <td>{{ report.patient_name }}</td>
+              <td>{{ report.report_date }}</td>
+              <td>{{ "نهائي" if report.status == "final" else "مسودة" }}</td>
+              <td>{{ report.print_count }}</td>
+              <td>
+                <a href="{{ url_for('app.show_report' if report.status == 'final' else 'app.edit_report', report_id=report.id) }}">
+                  {{ "عرض" if report.status == "final" else "متابعة" }}
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty-state">لا توجد تقارير بعد.</p>
+    {% endif %}
+  </section>
+{% endblock %}

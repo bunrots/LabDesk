@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}التقرير النهائي{% endblock %}
+{% block content %}
+  <section class="panel print-actions no-print">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">نسخة نهائية مستقرة</p>
+        <h2>التقرير {{ bundle.report.report_number }}</h2>
+      </div>
+      <div class="action-row">
+        <button class="js-print-trigger" data-log-url="{{ url_for('app.report_print_log', report_id=bundle.report.id) }}" type="button">طباعة</button>
+        <form method="post" action="{{ url_for('app.revise_report', report_id=bundle.report.id) }}">
+          <button class="button secondary" type="submit">إنشاء نسخة مراجعة</button>
+        </form>
+      </div>
+    </div>
+    <div class="summary-strip">
+      <span>عدد الطباعات: {{ bundle.report.print_count }}</span>
+      {% if bundle.report.finalized_at %}
+        <span>اعتمد في {{ bundle.report.finalized_at }}</span>
+      {% endif %}
+      {% if bundle.report.printed_at %}
+        <span>آخر طباعة {{ bundle.report.printed_at }}</span>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="print-sheet">
+    {{ snapshot_html|safe }}
+  </section>
+{% endblock %}

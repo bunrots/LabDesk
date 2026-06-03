@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}تحرير التقرير{% endblock %}
+{% block content %}
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">مسودة قابلة للتعديل</p>
+        <h2>تحرير التقرير {{ bundle.report.report_number }}</h2>
+      </div>
+      <div class="action-row">
+        <a class="button secondary" href="{{ url_for('app.preview_report', report_id=bundle.report.id) }}">معاينة التقرير</a>
+        <a class="button ghost" href="{{ url_for('app.report_history') }}">السجل</a>
+      </div>
+    </div>
+
+    <div class="summary-strip">
+      <span>{{ bundle.patient.full_name }}</span>
+      <span>{{ bundle.patient.patient_number }}</span>
+      <span>{{ sex_labels[bundle.patient.sex] }}</span>
+      <span>{{ bundle.patient.date_of_birth }}</span>
+      <span>{{ bundle.patient_age_display }}</span>
+    </div>
+  </section>
+
+  <div class="grid layout-report">
+    <section class="panel panel-highlight">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">إضافة أقسام</p>
+          <h3>اختر من القوالب الجاهزة</h3>
+        </div>
+      </div>
+      <form method="post" action="{{ url_for('app.add_report_section', report_id=bundle.report.id) }}" class="stack-form">
+        <label>
+          نوع القسم
+          <select name="section_code" required>
+            {% for section in catalog %}
+              <option value="{{ section.code }}" {% if loop.first %}selected{% endif %}>
+                {{ section.name_ar }}{% if section.code != "custom" and section.code in existing_codes %} - مضاف{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </label>
+        <label data-custom-name hidden>
+          عنوان القسم المخصص
+          <input name="custom_name" type="text" placeholder="مثال: تحليل إضافي">
+        </label>
+        <button type="submit">إضافة القسم</button>
+      </form>
+
+      <div class="section-list">
+        {% for section in bundle.sections %}
+          <div class="section-pill">{{ section.section_name_ar }}</div>
+        {% else %}
+          <p class="empty-state">لا توجد أقسام في المسودة بعد.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">إدخال النتائج</p>
+          <h3>املأ الحقول ثم احفظ</h3>
+        </div>
+      </div>
+      <form method="post" class="stack-form">
+        <div class="grid compact-grid">
+          <label>
+            تاريخ التقرير
+            <input name="report_date" type="date" value="{{ bundle.report.report_date }}" required>
+          </label>
+        </div>
+        <label>
+          ملاحظات عامة
+          <textarea name="notes" rows="3">{{ bundle.report.notes or '' }}</textarea>
+        </label>
+
+        {% if bundle.sections %}
+          {% for section in bundle.sections %}
+            <section class="report-section-card">
+              <div class="panel-heading section-heading">
+                <div>
+                  <h4>{{ section.section_name_ar }}</h4>
+                  <p class="muted">{{ section["items"]|length }} بنود</p>
+                </div>
+                <button
+                  class="button-link danger"
+                  type="submit"
+                  formaction="{{ url_for('app.delete_report_section', report_id=bundle.report.id, section_id=section.id) }}"
+                  formmethod="post"
+                  formnovalidate
+                >
+                  حذف القسم
+                </button>
+              </div>
+
+              <div class="item-list">
+                {% for item in section["items"] %}
+                  <div class="item-row {{ item.flag_class }}">
+                    <div class="item-head">
+                      <div>
+                        <strong>{{ item.label_ar }}</strong>
+                        {% if item.reference_display %}
+                          <p class="muted item-reference">المرجع المتوقع: {{ item.reference_display }}</p>
+                        {% endif %}
+                      </div>
+                      <div class="chip-row">
+                        <span class="result-badge">{{ item.result_type }}</span>
+                        {% if item.flag_label %}
+                          <span class="flag-badge {{ item.flag_class }}">{{ item.flag_label }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% if item.result_type == "numeric" %}
+                      <div class="grid item-grid">
+                        <label>
+                          النتيجة
+                          <input name="item-{{ item.id }}-numeric" type="number" step="any" value="{{ '' if item.value_numeric is none else item.value_numeric }}">
+                        </label>
+                        <label>
+                          الوحدة
+                          <input name="item-{{ item.id }}-unit" type="text" value="{{ item.unit_ar or '' }}">
+                        </label>
+                        <label>
+                          المجال المرجعي
+                          <input name="item-{{ item.id }}-reference" type="text" value="{{ item.reference_display or '' }}">
+                        </label>
+                      </div>
+                    {% elif item.result_type == "choice" %}
+                      <div class="grid item-grid">
+                        <label>
+                          النتيجة
+                          <select name="item-{{ item.id }}-choice">
+                            <option value="">اختر</option>
+                            {% for choice in item.choices %}
+                              <option value="{{ choice }}" {% if item.value_choice == choice %}selected{% endif %}>{{ choice }}</option>
+                            {% endfor %}
+                          </select>
+                        </label>
+                        <label>
+                          المجال المرجعي
+                          <input name="item-{{ item.id }}-reference" type="text" value="{{ item.reference_display or '' }}">
+                        </label>
+                        <label>
+                          الوحدة
+                          <input name="item-{{ item.id }}-unit" type="text" value="{{ item.unit_ar or '' }}">
+                        </label>
+                      </div>
+                    {% else %}
+                      <label>
+                        النتيجة
+                        <textarea name="item-{{ item.id }}-text" rows="3">{{ item.value_text or '' }}</textarea>
+                      </label>
+                      <div class="grid item-grid">
+                        <label>
+                          المجال المرجعي
+                          <input name="item-{{ item.id }}-reference" type="text" value="{{ item.reference_display or '' }}">
+                        </label>
+                        <label class="item-grid-span-2">
+                          ملاحظات
+                          <input name="item-{{ item.id }}-comment" type="text" value="{{ item.comment or '' }}">
+                        </label>
+                      </div>
+                    {% endif %}
+                    {% if item.result_type != "text" %}
+                      <label>
+                        ملاحظات
+                        <input name="item-{{ item.id }}-comment" type="text" value="{{ item.comment or '' }}">
+                      </label>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+            </section>
+          {% endfor %}
+        {% else %}
+          <p class="empty-state">أضف قسماً واحداً على الأقل قبل إدخال النتائج.</p>
+        {% endif %}
+
+        <div class="action-row">
+          <button type="submit">حفظ النتائج</button>
+          <a class="button secondary" href="{{ url_for('app.preview_report', report_id=bundle.report.id) }}">معاينة قبل الاعتماد</a>
+        </div>
+      </form>
+    </section>
+  </div>
+{% endblock %}

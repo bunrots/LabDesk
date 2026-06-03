@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}السجل{% endblock %}
+{% block content %}
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">أرشيف التقارير</p>
+        <h2>السجل وإعادة الطباعة</h2>
+      </div>
+    </div>
+    <form method="get" class="search-grid">
+      <label>
+        بحث بالاسم أو رقم التقرير
+        <input name="q" type="search" value="{{ query }}" placeholder="مثال: أحمد أو RP-20260603120000-ABC123">
+      </label>
+      <label>
+        تاريخ التقرير
+        <input name="report_date" type="date" value="{{ report_date }}">
+      </label>
+      <button type="submit">تطبيق البحث</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    {% if reports %}
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>رقم التقرير</th>
+            <th>المريض</th>
+            <th>التاريخ</th>
+            <th>الحالة</th>
+            <th>نسخة عن</th>
+            <th>طباعات</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in reports %}
+            <tr>
+              <td>{{ report.report_number }}</td>
+              <td>{{ report.patient_name }}</td>
+              <td>{{ report.report_date }}</td>
+              <td>{{ "نهائي" if report.status == "final" else "مسودة" }}</td>
+              <td>{{ report.revision_of_report_id or "-" }}</td>
+              <td>{{ report.print_count }}</td>
+              <td>
+                <a href="{{ url_for('app.show_report' if report.status == 'final' else 'app.edit_report', report_id=report.id) }}">
+                  {{ "عرض" if report.status == "final" else "تحرير" }}
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty-state">لا توجد تقارير مطابقة للمرشحات الحالية.</p>
+    {% endif %}
+  </section>
+{% endblock %}
