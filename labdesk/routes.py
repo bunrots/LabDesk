@@ -11,6 +11,7 @@ from .db import get_db
 from .services import (
     SEX_LABELS,
     add_section_to_report,
+    cancel_draft_report,
     age_summary,
     create_section_template,
     create_patient,
@@ -112,8 +113,8 @@ def patients_index():
 
     query = request.args.get("q", "").strip()
     page = request.args.get("page", type=int) or 1
-    patients, patient_total = search_patients(db, query, page=page, per_page=10)
-    recent_reports = get_recent_reports(db, limit=10)
+    patients, patient_total = search_patients(db, query, page=page, per_page=5)
+    recent_reports = get_recent_reports(db, limit=5)
     summary = get_dashboard_summary(db)
     patient_cards = []
     for patient in patients:
@@ -131,7 +132,7 @@ def patients_index():
         patient_total=patient_total,
         page=page,
         has_prev=page > 1,
-        has_next=page * 10 < patient_total,
+        has_next=page * 5 < patient_total,
         summary=summary,
         today=date.today().isoformat(),
         sex_labels=SEX_LABELS,
@@ -232,6 +233,18 @@ def delete_report_section(report_id: int, section_id: int):
     return redirect(url_for("app.edit_report", report_id=report_id))
 
 
+@bp.post("/reports/<int:report_id>/cancel")
+def cancel_report_draft(report_id: int):
+    db = get_db()
+    try:
+        cancel_draft_report(db, report_id)
+        flash("تم إلغاء المسودة وحذفها.", "success")
+        return redirect(url_for("app.patients_index"))
+    except ValueError as exc:
+        flash(str(exc), "error")
+        return redirect(url_for("app.edit_report", report_id=report_id))
+
+
 @bp.route("/reports/<int:report_id>/preview")
 def preview_report(report_id: int):
     db = get_db()
@@ -264,12 +277,19 @@ def report_history():
     db = get_db()
     query = request.args.get("q", "").strip()
     report_date = request.args.get("report_date", "").strip() or None
-    rows = get_history(db, query, report_date)
+    page = request.args.get("page", type=int) or 1
+    rows, total = get_history(db, query, report_date, page=page, per_page=10)
+    searched = bool(query or report_date)
     return render_template(
         "reports/history.html",
         reports=rows,
         query=query,
         report_date=report_date or "",
+        page=page,
+        total=total,
+        searched=searched,
+        has_prev=searched and page > 1,
+        has_next=searched and page * 10 < total,
     )
 
 

@@ -65,11 +65,23 @@
         }
       });
 
+      function applyAccent(color) {
+        if (!color) return;
+        document.body.style.setProperty("--brand-accent", color);
+      }
+
       document.addEventListener("click", function (event) {
         const swatch = event.target.closest("[data-accent-swatch]");
         if (!swatch) return;
         const colorInput = document.querySelector("[name='accent_color']");
         if (colorInput) colorInput.value = swatch.dataset.accentSwatch;
+        applyAccent(swatch.dataset.accentSwatch);
+      });
+
+      document.addEventListener("input", function (event) {
+        if (event.target.matches("[name='accent_color']")) {
+          applyAccent(event.target.value);
+        }
       });
     </script>
   </body>

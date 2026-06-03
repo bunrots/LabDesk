@@ -10,6 +10,9 @@
       <div class="action-row">
         <a class="button secondary" href="{{ url_for('app.preview_report', report_id=bundle.report.id) }}">معاينة التقرير</a>
         <a class="button ghost" href="{{ url_for('app.report_history') }}">السجل</a>
+        <form method="post" action="{{ url_for('app.cancel_report_draft', report_id=bundle.report.id) }}">
+          <button class="button ghost danger-outline" type="submit" formnovalidate>إلغاء المسودة</button>
+        </form>
       </div>
     </div>
 

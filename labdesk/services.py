@@ -416,7 +416,7 @@ def get_report(db, report_id: int):
     ).fetchone()
 
 
-def get_recent_reports(db, limit: int = 10):
+def get_recent_reports(db, limit: int = 5):
     return db.execute(
         """
         SELECT reports.id, reports.report_number, reports.report_date, reports.status, reports.print_count,
@@ -430,16 +430,11 @@ def get_recent_reports(db, limit: int = 10):
     ).fetchall()
 
 
-def search_patients(db, query: str | None, page: int = 1, per_page: int = 10):
+def search_patients(db, query: str | None, page: int = 1, per_page: int = 5):
     page = max(page, 1)
     offset = (page - 1) * per_page
     if not query:
-        total = db.execute("SELECT COUNT(*) AS count FROM patients").fetchone()["count"]
-        rows = db.execute(
-            "SELECT * FROM patients ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?",
-            (per_page, offset),
-        ).fetchall()
-        return rows, total
+        return [], 0
 
     like_query = f"%{query.strip()}%"
     total = db.execute(
@@ -463,23 +458,45 @@ def search_patients(db, query: str | None, page: int = 1, per_page: int = 10):
     return rows, total
 
 
-def get_history(db, query: str | None, report_date: str | None):
+def get_history(db, query: str | None, report_date: str | None, page: int = 1, per_page: int = 10):
     sql = """
         SELECT reports.*, patients.full_name AS patient_name
         FROM reports
         JOIN patients ON patients.id = reports.patient_id
         WHERE 1 = 1
     """
+    count_sql = """
+        SELECT COUNT(*) AS count
+        FROM reports
+        JOIN patients ON patients.id = reports.patient_id
+        WHERE 1 = 1
+    """
     params = []
+    count_params = []
+    searched = bool((query or "").strip() or report_date)
     if query:
         sql += " AND (patients.full_name LIKE ? OR reports.report_number LIKE ?)"
+        count_sql += " AND (patients.full_name LIKE ? OR reports.report_number LIKE ?)"
         like_query = f"%{query.strip()}%"
         params.extend([like_query, like_query])
+        count_params.extend([like_query, like_query])
     if report_date:
         sql += " AND reports.report_date = ?"
+        count_sql += " AND reports.report_date = ?"
         params.append(report_date)
+        count_params.append(report_date)
     sql += " ORDER BY reports.report_date DESC, reports.id DESC"
-    return db.execute(sql, params).fetchall()
+    if not searched:
+        sql += " LIMIT 10"
+        rows = db.execute(sql, params).fetchall()
+        return rows, len(rows)
+    total = db.execute(count_sql, count_params).fetchone()["count"]
+    page = max(page, 1)
+    offset = (page - 1) * per_page
+    sql += " LIMIT ? OFFSET ?"
+    params.extend([per_page, offset])
+    rows = db.execute(sql, params).fetchall()
+    return rows, total
 
 
 def get_existing_section_codes(db, report_id: int):
@@ -553,6 +570,16 @@ def delete_section(db, report_id: int, section_id: int):
     if report is None or report["status"] != "draft":
         raise ValueError("لا يمكن حذف قسم من تقرير نهائي.")
     db.execute("DELETE FROM report_sections WHERE id = ? AND report_id = ?", (section_id, report_id))
+    db.commit()
+
+
+def cancel_draft_report(db, report_id: int):
+    report = get_report(db, report_id)
+    if report is None:
+        raise ValueError("التقرير غير موجود.")
+    if report["status"] != "draft":
+        raise ValueError("يمكن إلغاء المسودات فقط.")
+    db.execute("DELETE FROM reports WHERE id = ? AND status = 'draft'", (report_id,))
     db.commit()
 
 

@@ -2,7 +2,7 @@
   <header class="report-brand-header">
     <div class="report-brand report-brand-left">
       {% if profile.logo_filename %}
-        <img class="report-logo" src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="شعار المخبر">
+        <img class="report-logo" src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="شعار المنشأة">
       {% endif %}
       <div>
         <h2>{{ profile.facility_name }}</h2>
@@ -15,8 +15,14 @@
       {% if profile.authority_line_3 %}<p>{{ profile.authority_line_3 }}</p>{% endif %}
     </div>
   </header>
+
   <div class="report-accent-line"></div>
-  <div class="report-watermark" {% if profile.logo_filename %}style="background-image: url('{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}');"{% endif %}></div>
+
+  {% if profile.logo_filename %}
+    <div class="report-watermark" aria-hidden="true">
+      <img src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="">
+    </div>
+  {% endif %}
 
   <section class="report-main-title">
     <h1>{{ profile.report_title }}</h1>
@@ -29,65 +35,69 @@
   </section>
 
   <table class="patient-meta-table">
-    <tr>
-      <th>رقم المريض</th>
-      <td>{{ patient.patient_number }}</td>
-      <th>اسم المريض</th>
-      <td>{{ patient.full_name }}</td>
-      <th>الجنس</th>
-      <td>{{ sex_labels[patient.sex] }}</td>
-    </tr>
-    <tr>
-      <th>تاريخ الميلاد</th>
-      <td>{{ patient.date_of_birth or "غير متاح" }}</td>
-      <th>العمر</th>
-      <td>{{ patient_age_display }}</td>
-      <th>رقم التقرير</th>
-      <td>{{ report.report_number }}</td>
-    </tr>
-    <tr>
-      <th>تاريخ التقرير</th>
-      <td>{{ report.report_date }}</td>
-      <th>ملاحظات عامة</th>
-      <td colspan="3">{{ report.notes or "-" }}</td>
-    </tr>
+    <tbody>
+      <tr>
+        <th>رقم المريض</th>
+        <td>{{ patient.patient_number }}</td>
+        <th>اسم المريض</th>
+        <td>{{ patient.full_name }}</td>
+        <th>الجنس</th>
+        <td>{{ sex_labels[patient.sex] }}</td>
+      </tr>
+      <tr>
+        <th>تاريخ الميلاد</th>
+        <td>{{ patient.date_of_birth or "غير متاح" }}</td>
+        <th>العمر</th>
+        <td>{{ patient_age_display }}</td>
+        <th>رقم التقرير</th>
+        <td>{{ report.report_number }}</td>
+      </tr>
+      <tr>
+        <th>تاريخ التقرير</th>
+        <td>{{ report.report_date }}</td>
+        <th>ملاحظات عامة</th>
+        <td colspan="3">{{ report.notes or "-" }}</td>
+      </tr>
+    </tbody>
   </table>
 
-  {% for section in sections %}
-    <section class="print-section">
-      <div class="section-banner">{{ section.section_name_ar }}</div>
-      <table class="print-table">
-        <thead>
-          <tr>
-            <th>التحليل</th>
-            <th>النتيجة</th>
-            <th>الحالة</th>
-            <th>المرجع</th>
-            <th>الوحدة</th>
-            <th>ملاحظات</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in section["items"] %}
-            <tr class="{{ item.flag_class }}">
-              <td>{{ item.label_ar }}</td>
-              <td class="result-value-cell">{{ item.display_value }}</td>
-              <td>
-                {% if item.flag_label %}
-                  <span class="print-flag {{ item.flag_class }}">{{ item.flag_label }}</span>
-                {% else %}
-                  طبيعي
-                {% endif %}
-              </td>
-              <td>{{ item.reference_display }}</td>
-              <td>{{ item.unit_ar or "" }}</td>
-              <td>{{ item.comment or "" }}</td>
+  <div class="report-body">
+    {% for section in sections %}
+      <section class="print-section">
+        <div class="section-banner">{{ section.section_name_ar }}</div>
+        <table class="print-table">
+          <thead>
+            <tr>
+              <th>التحليل</th>
+              <th>النتيجة</th>
+              <th>الحالة</th>
+              <th>المرجع</th>
+              <th>الوحدة</th>
+              <th>ملاحظات</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </section>
-  {% endfor %}
+          </thead>
+          <tbody>
+            {% for item in section["items"] %}
+              <tr class="{{ item.flag_class }}">
+                <td>{{ item.label_ar }}</td>
+                <td class="result-value-cell">{{ item.display_value }}</td>
+                <td>
+                  {% if item.flag_label %}
+                    <span class="print-flag {{ item.flag_class }}">{{ item.flag_label }}</span>
+                  {% else %}
+                    طبيعي
+                  {% endif %}
+                </td>
+                <td>{{ item.reference_display }}</td>
+                <td>{{ item.unit_ar or "" }}</td>
+                <td>{{ item.comment or "" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    {% endfor %}
+  </div>
 
   <footer class="report-footer">
     <pre>{{ report.lab_footer_text or profile.footer_text or "" }}</pre>

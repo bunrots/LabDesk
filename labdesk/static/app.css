@@ -26,10 +26,10 @@
   --line: #d8e2ec;
   --ink: #162232;
   --muted: #5f7188;
-  --brand: #155b9c;
-  --brand-deep: #0d4375;
-  --brand-soft: #ebf3fb;
   --accent: var(--brand-accent, #0f8f83);
+  --brand: var(--accent);
+  --brand-deep: color-mix(in srgb, var(--accent) 62%, black);
+  --brand-soft: color-mix(in srgb, var(--accent) 12%, white);
   --warning: #d97706;
   --danger: #b42318;
   --danger-soft: #fff1f1;
@@ -90,8 +90,13 @@ button,
 
 .button.ghost {
   background: transparent;
-  border: 1px solid rgba(21, 91, 156, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, white);
   color: var(--brand);
+}
+
+.button.ghost.danger-outline {
+  border-color: rgba(180, 35, 24, 0.22);
+  color: var(--danger);
 }
 
 .button-link {
@@ -228,6 +233,11 @@ main {
 
 .site-nav a:hover {
   background: var(--brand-soft);
+}
+
+.site-nav a.active,
+.site-nav a:focus-visible {
+  background: color-mix(in srgb, var(--accent) 12%, white);
 }
 
 .eyebrow {
@@ -506,8 +516,11 @@ main {
 .report-document {
   background: white;
   color: #111;
-  min-height: 297mm;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(297mm - 24mm);
   overflow: hidden;
+  padding: 0.3rem 0.35rem 0.15rem;
   position: relative;
 }
 
@@ -516,6 +529,7 @@ main {
   display: grid;
   gap: 1rem;
   grid-template-columns: 1fr 1fr;
+  padding: 0.15rem 0.15rem 0 0.15rem;
   position: relative;
   z-index: 2;
 }
@@ -535,6 +549,12 @@ main {
 
 .template-create-card h4 {
   margin: 0;
+}
+
+.compact-action {
+  align-self: start;
+  min-height: 38px;
+  padding: 0 0.95rem;
 }
 
 .report-brand {
@@ -572,32 +592,38 @@ main {
 
 .report-accent-line {
   background: var(--accent);
-  height: 3px;
-  margin: 0.7rem 0 1rem;
+  box-shadow: 0 6px 0 rgba(15, 143, 131, 0.08);
+  height: 2px;
+  margin: 0.55rem 0 0.8rem;
   position: relative;
   z-index: 2;
 }
 
 .report-watermark {
-  background-position: center 40%;
-  background-repeat: no-repeat;
-  background-size: 62%;
-  inset: 120px 0 0;
-  opacity: 0.045;
+  inset: 88px 0 48px;
+  opacity: 0.07;
   pointer-events: none;
   position: absolute;
   z-index: 0;
 }
 
+.report-watermark img {
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  opacity: 0.16;
+  width: 100%;
+}
+
 .report-main-title {
-  margin: 0.4rem 0 0.8rem;
+  margin: 0.2rem 0 0.65rem;
   position: relative;
   text-align: center;
   z-index: 2;
 }
 
 .report-main-title h1 {
-  font-size: 1.6rem;
+  font-size: 1.45rem;
   margin: 0;
 }
 
@@ -613,7 +639,7 @@ main {
 .patient-meta-table {
   border: 1px solid #98a8ba;
   border-collapse: collapse;
-  margin-top: 0.8rem;
+  margin-top: 0.4rem;
   position: relative;
   table-layout: fixed;
   width: 100%;
@@ -623,24 +649,30 @@ main {
 .patient-meta-table th,
 .patient-meta-table td {
   border: 1px solid #98a8ba;
-  padding: 0.4rem 0.55rem;
+  padding: 0.28rem 0.4rem;
   text-align: right;
   vertical-align: middle;
 }
 
 .patient-meta-table th {
   background: #f4f4f4;
-  font-size: 0.83rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  width: 12%;
+  width: 10%;
 }
 
 .patient-meta-table td {
-  font-size: 0.94rem;
+  font-size: 0.88rem;
+}
+
+.report-body {
+  flex: 1;
+  position: relative;
+  z-index: 2;
 }
 
 .print-section {
-  margin-top: 0.9rem;
+  margin-top: 0.65rem;
   position: relative;
   z-index: 2;
 }
@@ -650,9 +682,9 @@ main {
   border: 1px solid #98a8ba;
   border-bottom: 0;
   color: #111;
-  font-size: 1rem;
+  font-size: 0.96rem;
   font-weight: 700;
-  padding: 0.45rem 0.6rem;
+  padding: 0.35rem 0.5rem;
   text-align: center;
 }
 
@@ -663,7 +695,7 @@ main {
 .print-table th,
 .print-table td {
   border: 1px solid #98a8ba;
-  padding: 0.48rem 0.42rem;
+  padding: 0.34rem 0.32rem;
 }
 
 .print-table thead th {
@@ -685,8 +717,8 @@ main {
 
 .report-footer {
   border-top: 2px solid color-mix(in srgb, var(--accent) 35%, white);
-  margin-top: 1rem;
-  padding-top: 0.7rem;
+  margin-top: auto;
+  padding-top: 0.55rem;
   position: relative;
   z-index: 2;
 }
@@ -787,15 +819,6 @@ main {
     flex-direction: column;
   }
 
-  .patient-meta-table,
-  .patient-meta-table tbody,
-  .patient-meta-table tr,
-  .patient-meta-table th,
-  .patient-meta-table td {
-    display: block;
-    width: 100%;
-  }
-
   .site-nav {
     width: 100%;
   }
@@ -812,12 +835,28 @@ main {
 }
 
 @media print {
-  body {
+  html, body {
     background: white;
+    height: auto;
+  }
+
+  body {
+    margin: 0;
   }
 
   .page-shell {
     max-width: none;
+    padding: 0;
+  }
+
+  .print-sheet,
+  .report-document {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .print-sheet {
     padding: 0;
   }
 

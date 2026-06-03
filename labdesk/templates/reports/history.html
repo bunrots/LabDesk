@@ -6,6 +6,7 @@
       <div>
         <p class="eyebrow">أرشيف التقارير</p>
         <h2>السجل وإعادة الطباعة</h2>
+        <p class="muted">بدون بحث، يتم عرض آخر 10 تقارير فقط. عند البحث، تظهر النتائج على صفحات من 10.</p>
       </div>
     </div>
     <form method="get" class="search-grid">
@@ -55,6 +56,17 @@
       </table>
     {% else %}
       <p class="empty-state">لا توجد تقارير مطابقة للمرشحات الحالية.</p>
+    {% endif %}
+    {% if searched and reports %}
+      <div class="pagination-row">
+        {% if has_prev %}
+          <a class="button ghost" href="{{ url_for('app.report_history', q=query, report_date=report_date, page=page-1) }}">الصفحة السابقة</a>
+        {% endif %}
+        <span class="muted">إظهار {{ reports|length }} من أصل {{ total }}</span>
+        {% if has_next %}
+          <a class="button ghost" href="{{ url_for('app.report_history', q=query, report_date=report_date, page=page+1) }}">الصفحة التالية</a>
+        {% endif %}
+      </div>
     {% endif %}
   </section>
 {% endblock %}
