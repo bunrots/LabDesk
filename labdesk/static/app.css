@@ -790,9 +790,11 @@ main {
 }
 
 .report-brand-copy {
-  display: grid;
-  gap: 0.16rem;
-  text-align: left;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  text-align: center;
 }
 
 .report-brand-left {
@@ -813,11 +815,16 @@ main {
 .report-brand h2 {
   font-size: 1.28rem;
   font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.02;
 }
 
 .report-brand-copy p {
   color: #30343a;
   font-size: 0.92rem;
+  font-weight: 300;
+  letter-spacing: 0.035em;
+  line-height: 1;
   margin: 0;
 }
 
@@ -832,8 +839,8 @@ main {
 
 .report-title-block-right p {
   font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1.12;
+  font-weight: 300;
+  line-height: 1.08;
   margin: 0;
   white-space: nowrap;
 }
