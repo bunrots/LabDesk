@@ -41,6 +41,11 @@ Each platform currently includes:
 - `setup`
 - `run`
 - `backup`
+- `healthcheck`
+
+Windows also includes:
+
+- task registration / removal helpers
 
 ## Main Concepts
 

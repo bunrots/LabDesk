@@ -28,6 +28,7 @@ Scripts:
 - `scripts/linux/setup.sh`
 - `scripts/linux/run.sh`
 - `scripts/linux/backup.sh`
+- `scripts/linux/healthcheck.sh`
 
 ### First-time setup
 
@@ -61,6 +62,17 @@ HOST=0.0.0.0 PORT=5000 ./scripts/linux/run.sh
 
 Each backup creates a timestamped folder inside `backups/`.
 
+### Health check
+
+```bash
+./scripts/linux/healthcheck.sh
+```
+
+Optional environment variables:
+
+- `HOST`
+- `PORT`
+
 ### Scheduling backups
 
 Use `cron` or a `systemd` timer.
@@ -78,6 +90,10 @@ Scripts:
 - `scripts/windows/setup.ps1`
 - `scripts/windows/run.ps1`
 - `scripts/windows/backup.ps1`
+- `scripts/windows/healthcheck.ps1`
+- `scripts/windows/prune_backups.ps1`
+- `scripts/windows/register_tasks.ps1`
+- `scripts/windows/unregister_tasks.ps1`
 
 ### First-time setup
 
@@ -112,6 +128,17 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\backup.ps1
 
 Each backup creates a timestamped folder inside `backups\`.
 
+### Health check
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\healthcheck.ps1
+```
+
+Optional parameters:
+
+- `-HostName`
+- `-Port`
+
 ### Scheduling backups
 
 Use Windows Task Scheduler.
@@ -122,6 +149,57 @@ Recommended task:
 - action: `powershell.exe`
 - arguments: `-ExecutionPolicy Bypass -File C:\path\to\project\scripts\windows\backup.ps1`
 
+### Register scheduled tasks automatically
+
+This project also includes a helper script that registers three tasks:
+
+- start the app at user logon
+- run a daily backup
+- prune older backups weekly
+
+Example:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\register_tasks.ps1
+```
+
+Optional parameters:
+
+- `-TaskPrefix`
+- `-HostName`
+- `-Port`
+- `-DailyBackupTime`
+- `-WeeklyCleanupTime`
+- `-WeeklyCleanupDay`
+- `-KeepBackupCount`
+
+Example with custom settings:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\register_tasks.ps1 `
+  -TaskPrefix "LabDesk" `
+  -HostName 0.0.0.0 `
+  -Port 5000 `
+  -DailyBackupTime 20:00 `
+  -WeeklyCleanupDay Sunday `
+  -WeeklyCleanupTime 03:00 `
+  -KeepBackupCount 45
+```
+
+The default retention policy keeps the newest `45` backup folders.
+
+### Remove scheduled tasks
+
+If you need to remove the registered Windows tasks later:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\unregister_tasks.ps1
+```
+
+Optional parameter:
+
+- `-TaskPrefix`
+
 ## Updating
 
 Current recommended update model:
@@ -131,6 +209,7 @@ Current recommended update model:
 3. Replace code files with the new release.
 4. Re-run setup if `requirements.txt` changed.
 5. Start the app again.
+6. Run the health check.
 
 Do not delete:
 
