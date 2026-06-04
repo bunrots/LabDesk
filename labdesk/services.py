@@ -40,6 +40,44 @@ def parse_iso_date(value: str | None):
     return datetime.strptime(value, "%Y-%m-%d").date()
 
 
+def normalize_numeric_input(value: str | None) -> str:
+    raw = (value or "").strip()
+    if not raw:
+        return ""
+    translation = str.maketrans(
+        {
+            "٠": "0",
+            "١": "1",
+            "٢": "2",
+            "٣": "3",
+            "٤": "4",
+            "٥": "5",
+            "٦": "6",
+            "٧": "7",
+            "٨": "8",
+            "٩": "9",
+            "۰": "0",
+            "۱": "1",
+            "۲": "2",
+            "۳": "3",
+            "۴": "4",
+            "۵": "5",
+            "۶": "6",
+            "۷": "7",
+            "۸": "8",
+            "۹": "9",
+            "٫": ".",
+            ",": ".",
+            "٬": "",
+            " ": "",
+        }
+    )
+    normalized = raw.translate(translation)
+    if normalized.count(".") > 1:
+        raise ValueError("القيمة الرقمية تحتوي على أكثر من فاصلة عشرية.")
+    return normalized
+
+
 def build_iso_dob(form) -> str | None:
     day = (form.get("dob_day") or "").strip()
     month = (form.get("dob_month") or "").strip()
@@ -191,7 +229,7 @@ def build_definition_map(db):
 
 
 def _parse_optional_float(value, field_label: str):
-    raw = (value or "").strip()
+    raw = normalize_numeric_input(value)
     if not raw:
         return None
     try:
@@ -258,9 +296,11 @@ def upsert_default_reference_range(db, test_code: str, low_value, high_value, re
 
 
 def _parse_optional_int(value, field_label: str):
-    raw = (value or "").strip()
+    raw = normalize_numeric_input(value)
     if not raw:
         return None
+    if "." in raw:
+        raise ValueError(f"{field_label} يجب أن يكون رقماً صحيحاً.")
     try:
         return int(raw)
     except ValueError as exc:
@@ -268,13 +308,9 @@ def _parse_optional_int(value, field_label: str):
 
 
 def _age_value_to_days(value, unit, field_label: str):
-    raw = (value or "").strip()
-    if not raw:
+    amount = _parse_optional_int(value, field_label)
+    if amount is None:
         return None
-    try:
-        amount = int(raw)
-    except ValueError as exc:
-        raise ValueError(f"{field_label} يجب أن يكون رقماً صحيحاً.") from exc
     unit = (unit or "").strip() or "days"
     factors = {"days": 1, "months": 30, "years": 365}
     if unit not in factors:
@@ -898,7 +934,7 @@ def update_report(db, report_id: int, form):
         value_choice = None
 
         if item["result_type"] == "numeric":
-            raw_value = (form.get(f"item-{item['id']}-numeric") or "").strip()
+            raw_value = normalize_numeric_input(form.get(f"item-{item['id']}-numeric"))
             if raw_value:
                 try:
                     value_numeric = float(raw_value)

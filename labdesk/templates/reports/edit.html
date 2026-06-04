@@ -119,7 +119,14 @@
                       <div class="grid item-grid">
                         <label>
                           النتيجة
-                          <input name="item-{{ item.id }}-numeric" type="number" step="any" value="{{ '' if item.value_numeric is none else item.value_numeric }}">
+                          <input
+                            name="item-{{ item.id }}-numeric"
+                            type="text"
+                            inputmode="decimal"
+                            dir="ltr"
+                            spellcheck="false"
+                            value="{{ '' if item.value_numeric is none else item.value_numeric }}"
+                          >
                         </label>
                         <label>
                           الوحدة

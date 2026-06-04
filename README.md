@@ -27,6 +27,20 @@ The app initializes its SQLite database automatically inside `instance/labdesk.s
 
 - [Project Handbook](docs/HANDBOOK.md)
 - [Architecture Notes](docs/ARCHITECTURE.md)
+- [Deployment Guide](docs/DEPLOYMENT.md)
+
+## Deployment
+
+Cross-platform helper scripts live in:
+
+- `scripts/linux/`
+- `scripts/windows/`
+
+Each platform currently includes:
+
+- `setup`
+- `run`
+- `backup`
 
 ## Main Concepts
 

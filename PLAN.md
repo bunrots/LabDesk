@@ -28,6 +28,12 @@ Deliver a standalone Arabic-first lab reporting desk for small teams that need f
 - In-app template designer
 - PDF generation beyond browser-native print
 
+## Future Cleanup
+
+- Move the current seeded sample tests and reference ranges out of the core code path into a clearer seed/import structure
+- Keep the initial catalog available on fresh installs, but make it easier to replace, review, or regenerate later
+- Separate truly built-in bootstrap data from lab-specific sample data as the project matures
+
 ## Implementation Notes
 
 - Flask with server-rendered Jinja templates

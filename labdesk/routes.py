@@ -92,6 +92,14 @@ def _save_logo(upload) -> str | None:
     return filename
 
 
+def _delete_logo_file(filename: str | None) -> None:
+    if not filename:
+        return
+    path = os.path.join(_logo_upload_dir(), filename)
+    if os.path.exists(path):
+        os.remove(path)
+
+
 @bp.app_context_processor
 def inject_site_profile():
     db = get_db()
@@ -382,6 +390,7 @@ def settings():
     db = get_db()
     profile = get_lab_profile(db)
     if request.method == "POST":
+        previous_logo = profile["logo_filename"]
         logo_filename = None
         if request.form.get("remove_logo") == "on":
             logo_filename = ""
@@ -389,9 +398,14 @@ def settings():
             logo_filename = _save_logo(request.files["logo_file"])
         try:
             update_lab_profile(db, request.form, logo_filename if logo_filename is not None else None)
+            next_logo = None if logo_filename == "" else (logo_filename or previous_logo)
+            if previous_logo and previous_logo != next_logo:
+                _delete_logo_file(previous_logo)
             flash("تم تحديث إعدادات المخبر.", "success")
             return redirect(url_for("app.settings"))
         except ValueError as exc:
+            if logo_filename:
+                _delete_logo_file(logo_filename)
             flash(str(exc), "error")
             profile = get_lab_profile(db)
 

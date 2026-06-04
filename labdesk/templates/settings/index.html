@@ -197,11 +197,11 @@
         <div class="grid compact-grid settings-tight-grid" data-result-fields="numeric">
           <label>
             أقل قيمة طبيعية
-            <input name="low_value" type="number" step="any" placeholder="3.5">
+            <input name="low_value" type="text" inputmode="decimal" dir="ltr" spellcheck="false" placeholder="3.5">
           </label>
           <label>
             أعلى قيمة طبيعية
-            <input name="high_value" type="number" step="any" placeholder="5.1">
+            <input name="high_value" type="text" inputmode="decimal" dir="ltr" spellcheck="false" placeholder="5.1">
           </label>
         </div>
         <label data-result-fields="choice" hidden>
@@ -280,11 +280,11 @@
                   </label>
                   <label data-result-fields="numeric">
                     أقل قيمة
-                    <input name="low_value" type="number" step="any" value="{{ test.default_range.low_value if test.default_range and test.default_range.low_value is not none else '' }}">
+                    <input name="low_value" type="text" inputmode="decimal" dir="ltr" spellcheck="false" value="{{ test.default_range.low_value if test.default_range and test.default_range.low_value is not none else '' }}">
                   </label>
                   <label data-result-fields="numeric">
                     أعلى قيمة
-                    <input name="high_value" type="number" step="any" value="{{ test.default_range.high_value if test.default_range and test.default_range.high_value is not none else '' }}">
+                    <input name="high_value" type="text" inputmode="decimal" dir="ltr" spellcheck="false" value="{{ test.default_range.high_value if test.default_range and test.default_range.high_value is not none else '' }}">
                   </label>
                   <label data-result-fields="choice">
                     خيارات الاختيار
@@ -314,7 +314,7 @@
                                 <option value="female" {% if range.sex == "female" %}selected{% endif %}>أنثى</option>
                               </select>
                               <div class="age-bound-field">
-                                <input name="min_age_value" type="number" min="0" step="1" value="{{ range.min_age_parts.value }}" placeholder="العمر من">
+                                <input name="min_age_value" type="text" inputmode="numeric" dir="ltr" spellcheck="false" value="{{ range.min_age_parts.value }}" placeholder="العمر من">
                                 <select name="min_age_unit">
                                   <option value="days" {% if range.min_age_parts.unit == "days" %}selected{% endif %}>يوم</option>
                                   <option value="months" {% if range.min_age_parts.unit == "months" %}selected{% endif %}>شهر</option>
@@ -322,15 +322,15 @@
                                 </select>
                               </div>
                               <div class="age-bound-field">
-                                <input name="max_age_value" type="number" min="0" step="1" value="{{ range.max_age_parts.value }}" placeholder="العمر إلى">
+                                <input name="max_age_value" type="text" inputmode="numeric" dir="ltr" spellcheck="false" value="{{ range.max_age_parts.value }}" placeholder="العمر إلى">
                                 <select name="max_age_unit">
                                   <option value="days" {% if range.max_age_parts.unit == "days" %}selected{% endif %}>يوم</option>
                                   <option value="months" {% if range.max_age_parts.unit == "months" %}selected{% endif %}>شهر</option>
                                   <option value="years" {% if range.max_age_parts.unit == "years" %}selected{% endif %}>سنة</option>
                                 </select>
                               </div>
-                              <input name="low_value" type="number" step="any" value="{{ range.low_value if range.low_value is not none else '' }}" placeholder="الحد الأدنى">
-                              <input name="high_value" type="number" step="any" value="{{ range.high_value if range.high_value is not none else '' }}" placeholder="الحد الأعلى">
+                              <input name="low_value" type="text" inputmode="decimal" dir="ltr" spellcheck="false" value="{{ range.low_value if range.low_value is not none else '' }}" placeholder="الحد الأدنى">
+                              <input name="high_value" type="text" inputmode="decimal" dir="ltr" spellcheck="false" value="{{ range.high_value if range.high_value is not none else '' }}" placeholder="الحد الأعلى">
                               <input name="reference_text_ar" type="text" value="{{ range.reference_text_ar or '' }}" placeholder="مرجع مطبوع">
                               <div class="range-row-actions">
                                 <button type="submit" class="button compact-action">حفظ</button>
@@ -350,7 +350,7 @@
                             <option value="female">أنثى</option>
                           </select>
                           <div class="age-bound-field">
-                            <input name="min_age_value" type="number" min="0" step="1" placeholder="العمر من">
+                            <input name="min_age_value" type="text" inputmode="numeric" dir="ltr" spellcheck="false" placeholder="العمر من">
                             <select name="min_age_unit">
                               <option value="days">يوم</option>
                               <option value="months">شهر</option>
@@ -358,15 +358,15 @@
                             </select>
                           </div>
                           <div class="age-bound-field">
-                            <input name="max_age_value" type="number" min="0" step="1" placeholder="العمر إلى">
+                            <input name="max_age_value" type="text" inputmode="numeric" dir="ltr" spellcheck="false" placeholder="العمر إلى">
                             <select name="max_age_unit">
                               <option value="days">يوم</option>
                               <option value="months">شهر</option>
                               <option value="years">سنة</option>
                             </select>
                           </div>
-                          <input name="low_value" type="number" step="any" placeholder="الحد الأدنى">
-                          <input name="high_value" type="number" step="any" placeholder="الحد الأعلى">
+                          <input name="low_value" type="text" inputmode="decimal" dir="ltr" spellcheck="false" placeholder="الحد الأدنى">
+                          <input name="high_value" type="text" inputmode="decimal" dir="ltr" spellcheck="false" placeholder="الحد الأعلى">
                           <input name="reference_text_ar" type="text" placeholder="مرجع مطبوع">
                           <div class="range-row-actions">
                             <button type="submit" class="button compact-action">إضافة</button>
