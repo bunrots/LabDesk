@@ -1048,12 +1048,25 @@ main {
   font-size: 0.84rem;
 }
 
-.meta-time-stamp {
-  color: #4a5665;
+.meta-date-cell {
   direction: ltr;
+  white-space: nowrap;
+}
+
+.meta-date-value {
+  unicode-bidi: plaintext;
+}
+
+.meta-time-divider {
+  color: #7a8697;
   display: inline-block;
-  font-size: 0.8rem;
-  margin-inline-start: 0.35rem;
+  margin: 0 0.35rem;
+}
+
+.meta-time-stamp {
+  color: #3e4c5d;
+  display: inline-block;
+  font-size: 0.76rem;
   unicode-bidi: plaintext;
 }
 

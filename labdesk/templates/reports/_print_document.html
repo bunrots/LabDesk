@@ -61,9 +61,10 @@
       </tr>
       <tr>
         <th>تاريخ التقرير</th>
-        <td>
-          {{ report.report_date }}
+        <td class="meta-date-cell">
+          <span class="meta-date-value">{{ report.report_date }}</span>
           {% if report.finalized_at %}
+            <span class="meta-time-divider">•</span>
             <span class="meta-time-stamp">{{ format_time_portion(report.finalized_at) }}</span>
           {% endif %}
         </td>
