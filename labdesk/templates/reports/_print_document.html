@@ -62,8 +62,12 @@
       <tr>
         <th>تاريخ التقرير</th>
         <td>{{ report.report_date }}</td>
+        <th>القسم</th>
+        <td>{{ report.department_name or "-" }}</td>
+      </tr>
+      <tr>
         <th>الحالة</th>
-        <td>{{ "نسخة مراجعة" if report.revision_of_report_id else "نهائي" }}</td>
+        <td colspan="3">{{ "نسخة مراجعة" if report.revision_of_report_id else "نهائي" }}</td>
       </tr>
       <tr>
         <th class="meta-notes-label">ملاحظات عامة</th>
@@ -79,7 +83,7 @@
         <table class="print-table">
           <thead>
             <tr>
-              <th>التحليل</th>
+              <th>المؤشر</th>
               <th>النتيجة</th>
               <th>الحالة</th>
               <th>المرجع</th>

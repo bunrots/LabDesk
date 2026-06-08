@@ -13,7 +13,7 @@ from .db import get_db
 from .services import (
     SECTION_TYPE_INFO,
     SEX_LABELS,
-    add_section_to_report,
+    add_sections_to_report,
     cancel_draft_report,
     age_summary,
     create_section_template,
@@ -22,6 +22,7 @@ from .services import (
     create_report,
     create_revision,
     create_test_definition,
+    find_exact_name_matches,
     delete_section_template,
     delete_specific_reference_range,
     delete_test_definition,
@@ -50,27 +51,13 @@ from .services import (
 
 bp = Blueprint("app", __name__)
 
-
-def _dob_context():
-    current_year = date.today().year
+def _patient_form_values(source=None):
+    source = source or {}
     return {
-        "dob_days": [f"{day:02d}" for day in range(1, 32)],
-        "dob_months": [(f"{month:02d}", label) for month, label in enumerate([
-            "",
-            "كانون الثاني",
-            "شباط",
-            "آذار",
-            "نيسان",
-            "أيار",
-            "حزيران",
-            "تموز",
-            "آب",
-            "أيلول",
-            "تشرين الأول",
-            "تشرين الثاني",
-            "كانون الأول",
-        ]) if month],
-        "dob_years": [str(year) for year in range(current_year, current_year - 110, -1)],
+        "full_name": (source.get("full_name") or "").strip(),
+        "sex": (source.get("sex") or "unknown").strip() or "unknown",
+        "phone": (source.get("phone") or "").strip(),
+        "current_age": (source.get("current_age") or "").strip(),
     }
 
 
@@ -150,15 +137,24 @@ def uploaded_favicon():
 @bp.route("/patients", methods=["GET", "POST"])
 def patients_index():
     db = get_db()
+    duplicate_matches = []
+    pending_patient = _patient_form_values()
 
     if request.method == "POST":
+        pending_patient = _patient_form_values(request.form)
         try:
-            patient = create_patient(db, request.form)
-            report = create_report(db, patient["id"], {})
-            flash("تم حفظ المريض بنجاح.", "success")
-            return redirect(url_for("app.edit_report", report_id=report["id"]))
+            confirm_duplicate = request.form.get("confirm_duplicate") == "1"
+            duplicate_matches = find_exact_name_matches(db, pending_patient["full_name"])
+            if duplicate_matches and not confirm_duplicate:
+                flash("يوجد مريض أو أكثر بنفس الاسم الثلاثي تماماً. يمكنك فتح الملف الموجود أو المتابعة بإنشاء مريض جديد.", "warning")
+            else:
+                patient = create_patient(db, request.form)
+                report = create_report(db, patient["id"], {})
+                flash("تم حفظ المريض بنجاح.", "success")
+                return redirect(url_for("app.edit_report", report_id=report["id"]))
         except ValueError as exc:
             flash(str(exc), "error")
+            duplicate_matches = []
 
     query = request.args.get("q", "").strip()
     page = request.args.get("page", type=int) or 1
@@ -184,8 +180,30 @@ def patients_index():
         has_next=page * 5 < patient_total,
         summary=summary,
         today=date.today().isoformat(),
+        duplicate_matches=duplicate_matches,
+        pending_patient=pending_patient,
         sex_labels=SEX_LABELS,
-        **_dob_context(),
+    )
+
+
+@bp.get("/patients/exact-match")
+def patient_exact_match_lookup():
+    db = get_db()
+    full_name = request.args.get("full_name", "").strip()
+    matches = find_exact_name_matches(db, full_name)
+    return jsonify(
+        {
+            "matches": [
+                {
+                    "id": patient["id"],
+                    "full_name": patient["full_name"],
+                    "patient_number": patient["patient_number"],
+                    "sex_label": SEX_LABELS.get(patient["sex"], "غير محدد"),
+                    "age_value": patient["age_value"],
+                }
+                for patient in matches
+            ]
+        }
     )
 
 
@@ -205,6 +223,18 @@ def patient_detail(patient_id: int):
         patient_age_display=age_summary(patient),
         sex_labels=SEX_LABELS,
     )
+
+
+@bp.get("/patients/<int:patient_id>/quick-report")
+def patient_quick_report(patient_id: int):
+    db = get_db()
+    patient = get_patient(db, patient_id)
+    if patient is None:
+        flash("المريض غير موجود.", "error")
+        return redirect(url_for("app.patients_index"))
+    report = create_report(db, patient_id, {})
+    flash("تم فتح تقرير جديد لهذا المريض.", "success")
+    return redirect(url_for("app.edit_report", report_id=report["id"]))
 
 
 @bp.route("/reports/new", methods=["GET", "POST"])
@@ -242,17 +272,21 @@ def edit_report(report_id: int):
     if request.method == "POST":
         try:
             update_report(db, report_id, request.form)
-            flash("تم حفظ نتائج التقرير.", "success")
-            return redirect(url_for("app.edit_report", report_id=report_id))
+            flash("تم حفظ التقرير وفتح المعاينة.", "success")
+            return redirect(url_for("app.preview_report", report_id=report_id))
         except ValueError as exc:
             flash(str(exc), "error")
 
     catalog = get_catalog(db)
     existing_codes = {section["section_code"] for section in bundle["sections"]}
+    catalog_templates = [section for section in catalog if section["code"] != "custom"]
+    featured_templates = catalog_templates[:10]
+    more_templates = catalog_templates[10:]
     return render_template(
         "reports/edit.html",
         bundle=bundle,
-        catalog=catalog,
+        featured_templates=featured_templates,
+        more_templates=more_templates,
         existing_codes=existing_codes,
         sex_labels=SEX_LABELS,
     )
@@ -261,11 +295,11 @@ def edit_report(report_id: int):
 @bp.post("/reports/<int:report_id>/sections")
 def add_report_section(report_id: int):
     db = get_db()
-    section_code = request.form.get("section_code") or ""
+    section_codes = request.form.getlist("section_codes")
     custom_name = request.form.get("custom_name")
     try:
-        add_section_to_report(db, report_id, section_code, custom_name)
-        flash("تمت إضافة القسم إلى التقرير.", "success")
+        added_count = add_sections_to_report(db, report_id, section_codes, custom_name)
+        flash(f"تمت إضافة {added_count} تحليل إلى التقرير.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(url_for("app.edit_report", report_id=report_id))
@@ -276,7 +310,7 @@ def delete_report_section(report_id: int, section_id: int):
     db = get_db()
     try:
         delete_section(db, report_id, section_id)
-        flash("تم حذف القسم من المسودة.", "success")
+        flash("تم حذف التحليل من المسودة.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(url_for("app.edit_report", report_id=report_id))
@@ -431,7 +465,7 @@ def create_section_template_view():
     db = get_db()
     try:
         create_section_template(db, request.form)
-        flash("تمت إضافة قسم جديد.", "success")
+        flash("تمت إضافة تحليل جديد.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(url_for("app.settings"))
@@ -442,7 +476,7 @@ def create_test_template_view():
     db = get_db()
     try:
         create_test_definition(db, request.form)
-        flash("تمت إضافة تحليل جديد.", "success")
+        flash("تمت إضافة مؤشر جديد.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(url_for("app.settings"))
@@ -453,7 +487,7 @@ def update_section_template_view(section_code: str):
     db = get_db()
     try:
         update_section_template(db, section_code, request.form)
-        flash("تم تحديث القالب.", "success")
+        flash("تم تحديث التحليل.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(url_for("app.settings"))
@@ -464,7 +498,7 @@ def delete_section_template_view(section_code: str):
     db = get_db()
     try:
         delete_section_template(db, section_code)
-        flash("تم حذف القسم وكل التحاليل التابعة له.", "success")
+        flash("تم حذف التحليل وكل المؤشرات التابعة له.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(url_for("app.settings"))
@@ -475,7 +509,7 @@ def update_test_template_view(test_id: int):
     db = get_db()
     try:
         update_test_definition(db, test_id, request.form)
-        flash("تم تحديث التحليل.", "success")
+        flash("تم تحديث المؤشر.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(url_for("app.settings"))
@@ -486,7 +520,7 @@ def delete_test_template_view(test_id: int):
     db = get_db()
     try:
         delete_test_definition(db, test_id)
-        flash("تم حذف التحليل وقواعده المرجعية.", "success")
+        flash("تم حذف المؤشر وقواعده المرجعية.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(url_for("app.settings"))

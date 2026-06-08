@@ -21,9 +21,9 @@ FLAG_LABELS = {
 }
 
 SECTION_TYPE_INFO = {
-    "panel": {"label": "جدولي", "description": "قسم تحاليل قياسي يعرض النتائج ضمن جدول مختصر ومنظم."},
-    "structured": {"label": "منظم", "description": "قسم وصفي منظم لتحاليل مثل البول أو البراز أو اللطاخة مع حقول متنوعة."},
-    "custom": {"label": "حر", "description": "قسم نصي حر للتقارير الخاصة أو الحالات غير المعتادة."},
+    "panel": {"label": "جدولي", "description": "تحليل قياسي يعرض النتائج ضمن جدول مختصر ومنظم."},
+    "structured": {"label": "منظم", "description": "تحليل وصفي منظم لتحاليل مثل البول أو البراز أو اللطاخة مع حقول متنوعة."},
+    "custom": {"label": "حر", "description": "تحليل نصي حر للتقارير الخاصة أو الحالات غير المعتادة."},
 }
 
 
@@ -38,6 +38,10 @@ def parse_iso_date(value: str | None):
     if not value:
         return None
     return datetime.strptime(value, "%Y-%m-%d").date()
+
+
+def normalize_person_name(value: str | None) -> str:
+    return " ".join((value or "").split())
 
 
 def normalize_numeric_input(value: str | None) -> str:
@@ -93,17 +97,37 @@ def build_iso_dob(form) -> str | None:
     return dob.isoformat()
 
 
+def build_iso_dob_from_age(form) -> str | None:
+    raw_age = normalize_numeric_input(form.get("current_age"))
+    if not raw_age:
+        return None
+    if "." in raw_age:
+        raise ValueError("العمر الحالي يجب أن يكون رقماً صحيحاً.")
+    try:
+        age_years = int(raw_age)
+    except ValueError as exc:
+        raise ValueError("العمر الحالي يجب أن يكون رقماً صحيحاً.") from exc
+    if age_years < 0 or age_years > 130:
+        raise ValueError("العمر الحالي غير صالح.")
+    birth_year = date.today().year - age_years
+    return date(birth_year, 1, 1).isoformat()
+
+
 def compute_patient_age_days(patient, report_date: str | None = None):
     if patient is None:
         return None
 
     report_day = parse_iso_date(report_date or date.today().isoformat())
+    age_value = patient["age_value"]
+    age_unit = patient["age_unit"]
+    if age_value not in (None, "") and age_unit:
+        factor = {"days": 1, "months": 30, "years": 365}.get(age_unit)
+        if factor:
+            return int(age_value) * factor
+
     dob = parse_iso_date(patient["date_of_birth"])
     if dob:
         return max((report_day - dob).days, 0)
-
-    age_value = patient["age_value"]
-    age_unit = patient["age_unit"]
     if age_value in (None, "") or not age_unit:
         return None
     factor = {"days": 1, "months": 30, "years": 365}.get(age_unit)
@@ -173,10 +197,20 @@ def update_lab_profile(db, form, logo_filename: str | None = None):
 def get_catalog(db):
     rows = db.execute(
         """
-        SELECT code, name_ar, section_type
+        SELECT
+            section_templates.code,
+            section_templates.name_ar,
+            section_templates.section_type,
+            COUNT(report_sections.id) AS usage_count
         FROM section_templates
+        LEFT JOIN report_sections ON report_sections.section_code = section_templates.code
         WHERE is_active = 1
-        ORDER BY display_order, code
+        GROUP BY section_templates.code, section_templates.name_ar, section_templates.section_type, section_templates.display_order
+        ORDER BY
+            CASE WHEN section_templates.code = 'custom' THEN 1 ELSE 0 END,
+            usage_count DESC,
+            section_templates.display_order,
+            section_templates.code
         """
     ).fetchall()
     return [dict(row) for row in rows]
@@ -448,10 +482,10 @@ def create_section_template(db, form):
     name_ar = (form.get("name_ar") or "").strip()
     section_type = (form.get("section_type") or "").strip()
     if not code or not name_ar or section_type not in {"panel", "structured", "custom"}:
-        raise ValueError("بيانات القسم الجديد غير مكتملة.")
+        raise ValueError("بيانات التحليل الجديد غير مكتملة.")
     exists = db.execute("SELECT 1 FROM section_templates WHERE code = ?", (code,)).fetchone()
     if exists is not None:
-        raise ValueError("رمز القسم مستخدم مسبقاً.")
+        raise ValueError("رمز التحليل مستخدم مسبقاً.")
     next_order = db.execute(
         "SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM section_templates"
     ).fetchone()["next_order"]
@@ -476,13 +510,13 @@ def create_test_definition(db, form):
     low_value = _parse_optional_float(form.get("low_value"), "الحد الأدنى")
     high_value = _parse_optional_float(form.get("high_value"), "الحد الأعلى")
     if not section_code or not test_code or not label_ar or result_type not in {"numeric", "choice", "text"}:
-        raise ValueError("بيانات التحليل الجديد غير مكتملة.")
+        raise ValueError("بيانات المؤشر الجديد غير مكتملة.")
     section = db.execute("SELECT 1 FROM section_templates WHERE code = ?", (section_code,)).fetchone()
     if section is None:
-        raise ValueError("القسم المحدد غير موجود.")
+        raise ValueError("التحليل المحدد غير موجود.")
     exists = db.execute("SELECT 1 FROM test_definitions WHERE test_code = ?", (test_code,)).fetchone()
     if exists is not None:
-        raise ValueError("رمز التحليل مستخدم مسبقاً.")
+        raise ValueError("رمز المؤشر مستخدم مسبقاً.")
     next_order = db.execute(
         "SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM test_definitions WHERE section_code = ?",
         (section_code,),
@@ -546,7 +580,7 @@ def update_section_template(db, section_code: str, form):
     name_ar = (form.get("name_ar") or "").strip()
     is_active = 1 if form.get("is_active") == "on" else 0
     if not name_ar:
-        raise ValueError("اسم القسم مطلوب.")
+        raise ValueError("اسم التحليل مطلوب.")
     db.execute(
         "UPDATE section_templates SET name_ar = ?, is_active = ? WHERE code = ?",
         (name_ar, is_active, section_code),
@@ -557,7 +591,7 @@ def update_section_template(db, section_code: str, form):
 def delete_section_template(db, section_code: str):
     section = db.execute("SELECT * FROM section_templates WHERE code = ?", (section_code,)).fetchone()
     if section is None:
-        raise ValueError("القسم غير موجود.")
+        raise ValueError("التحليل غير موجود.")
     tests = db.execute("SELECT test_code FROM test_definitions WHERE section_code = ?", (section_code,)).fetchall()
     for test in tests:
         db.execute("DELETE FROM reference_ranges WHERE test_code = ?", (test["test_code"],))
@@ -569,7 +603,7 @@ def delete_section_template(db, section_code: str):
 def update_test_definition(db, test_id: int, form):
     current = db.execute("SELECT * FROM test_definitions WHERE id = ?", (test_id,)).fetchone()
     if current is None:
-        raise ValueError("التحليل غير موجود.")
+        raise ValueError("المؤشر غير موجود.")
     label_ar = (form.get("label_ar") or "").strip()
     result_type = (form.get("result_type") or "").strip()
     default_unit_ar = (form.get("default_unit_ar") or "").strip() or None
@@ -579,7 +613,7 @@ def update_test_definition(db, test_id: int, form):
     high_value = _parse_optional_float(form.get("high_value"), "الحد الأعلى")
     is_active = 1 if form.get("is_active") == "on" else 0
     if not label_ar:
-        raise ValueError("اسم التحليل مطلوب.")
+        raise ValueError("اسم المؤشر مطلوب.")
     if result_type not in {"numeric", "choice", "text"}:
         raise ValueError("نوع الحقل غير صالح.")
     choices = [choice.strip() for choice in choices_text.split(",") if choice.strip()] if result_type == "choice" else []
@@ -610,40 +644,57 @@ def update_test_definition(db, test_id: int, form):
 def delete_test_definition(db, test_id: int):
     current = db.execute("SELECT * FROM test_definitions WHERE id = ?", (test_id,)).fetchone()
     if current is None:
-        raise ValueError("التحليل غير موجود.")
+        raise ValueError("المؤشر غير موجود.")
     db.execute("DELETE FROM reference_ranges WHERE test_code = ?", (current["test_code"],))
     db.execute("DELETE FROM test_definitions WHERE id = ?", (test_id,))
     db.commit()
 
 
 def create_patient(db, form):
-    full_name = (form.get("full_name") or "").strip()
+    full_name = normalize_person_name(form.get("full_name"))
     sex = form.get("sex") or "unknown"
-    date_of_birth = build_iso_dob(form)
+    date_of_birth = build_iso_dob_from_age(form)
+    current_age = _parse_optional_int(form.get("current_age"), "العمر الحالي")
 
     if not full_name:
         raise ValueError("اسم المريض مطلوب.")
     if not date_of_birth:
-        raise ValueError("تاريخ الميلاد مطلوب.")
+        raise ValueError("العمر الحالي مطلوب.")
 
     patient_number = generate_identifier("patient")
     db.execute(
         """
         INSERT INTO patients
-        (patient_number, full_name, sex, date_of_birth, phone, notes)
-        VALUES (?, ?, ?, ?, ?, ?)
+        (patient_number, full_name, sex, date_of_birth, age_value, age_unit, phone, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             patient_number,
             full_name,
             sex,
             date_of_birth,
+            current_age,
+            "years",
             (form.get("phone") or "").strip() or None,
-            (form.get("notes") or "").strip() or None,
+            None,
         ),
     )
     db.commit()
     return db.execute("SELECT * FROM patients WHERE patient_number = ?", (patient_number,)).fetchone()
+
+
+def find_exact_name_matches(db, full_name: str):
+    cleaned = normalize_person_name(full_name)
+    if not cleaned:
+        return []
+    rows = db.execute(
+        """
+        SELECT *
+        FROM patients
+        ORDER BY updated_at DESC, id DESC
+        """
+    ).fetchall()
+    return [row for row in rows if normalize_person_name(row["full_name"]) == cleaned]
 
 
 def create_report(db, patient_id: int, form):
@@ -657,13 +708,14 @@ def create_report(db, patient_id: int, form):
     db.execute(
         """
         INSERT INTO reports
-        (report_number, patient_id, report_date, lab_header_text, lab_footer_text, notes)
-        VALUES (?, ?, ?, ?, ?, ?)
+        (report_number, patient_id, report_date, department_name, lab_header_text, lab_footer_text, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             report_number,
             patient_id,
             report_date,
+            (form.get("department_name") or "").strip() or None,
             profile["facility_name"],
             profile["footer_text"],
             (form.get("notes") or "").strip() or None,
@@ -792,13 +844,13 @@ def add_section_to_report(db, report_id: int, section_code: str, custom_name: st
 
     section = get_section_template(db, section_code)
     if section is None:
-        raise ValueError("القسم المطلوب غير موجود.")
+        raise ValueError("التحليل المطلوب غير موجود.")
     if section["is_active"] != 1:
-        raise ValueError("هذا القسم غير مفعل حالياً.")
+        raise ValueError("هذا التحليل غير مفعل حالياً.")
 
     existing_codes = get_existing_section_codes(db, report_id)
     if section_code != "custom" and section_code in existing_codes:
-        raise ValueError("تمت إضافة هذا القسم مسبقاً.")
+        raise ValueError("تمت إضافة هذا التحليل مسبقاً.")
 
     next_order = db.execute(
         "SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM report_sections WHERE report_id = ?",
@@ -841,10 +893,43 @@ def add_section_to_report(db, report_id: int, section_code: str, custom_name: st
     return section_id
 
 
+def add_sections_to_report(db, report_id: int, section_codes, custom_name: str | None = None):
+    normalized_codes = []
+    seen = set()
+    for code in section_codes or []:
+        cleaned = (code or "").strip()
+        if cleaned and cleaned not in seen:
+            normalized_codes.append(cleaned)
+            seen.add(cleaned)
+
+    added_count = 0
+    skipped_duplicates = 0
+    existing_codes = get_existing_section_codes(db, report_id)
+
+    for section_code in normalized_codes:
+        if section_code != "custom" and section_code in existing_codes:
+            skipped_duplicates += 1
+            continue
+        add_section_to_report(db, report_id, section_code, custom_name if section_code == "custom" else None)
+        existing_codes.add(section_code)
+        added_count += 1
+
+    if custom_name and "custom" not in seen:
+        add_section_to_report(db, report_id, "custom", custom_name)
+        added_count += 1
+
+    if added_count == 0:
+        if skipped_duplicates:
+            raise ValueError("التحاليل المحددة مضافة مسبقاً.")
+        raise ValueError("اختر تحليلاً واحداً على الأقل.")
+
+    return added_count
+
+
 def delete_section(db, report_id: int, section_id: int):
     report = get_report(db, report_id)
     if report is None or report["status"] != "draft":
-        raise ValueError("لا يمكن حذف قسم من تقرير نهائي.")
+        raise ValueError("لا يمكن حذف تحليل من تقرير نهائي.")
     db.execute("DELETE FROM report_sections WHERE id = ? AND report_id = ?", (section_id, report_id))
     db.commit()
 
@@ -907,11 +992,12 @@ def update_report(db, report_id: int, form):
     db.execute(
         """
         UPDATE reports
-        SET report_date = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+        SET report_date = ?, department_name = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
         """,
         (
             next_report_date,
+            (form.get("department_name") or "").strip() or None,
             (form.get("notes") or "").strip() or None,
             report_id,
         ),
@@ -1098,13 +1184,14 @@ def create_revision(db, report_id: int):
     cursor = db.execute(
         """
         INSERT INTO reports
-        (report_number, patient_id, report_date, status, revision_of_report_id, lab_header_text, lab_footer_text, notes)
-        VALUES (?, ?, ?, 'draft', ?, ?, ?, ?)
+        (report_number, patient_id, report_date, department_name, status, revision_of_report_id, lab_header_text, lab_footer_text, notes)
+        VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?)
         """,
         (
             new_report_number,
             bundle["report"]["patient_id"],
             bundle["report"]["report_date"],
+            bundle["report"]["department_name"],
             report_id,
             bundle["report"]["lab_header_text"],
             bundle["report"]["lab_footer_text"],

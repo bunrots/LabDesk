@@ -323,6 +323,11 @@ main {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.patient-intake-grid {
+  align-items: end;
+  grid-template-columns: minmax(120px, 150px) minmax(140px, 180px) minmax(180px, 240px);
+}
+
 .item-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -416,6 +421,10 @@ main {
   gap: 0.7rem;
 }
 
+.duplicate-match-panel.is-hidden {
+  display: none;
+}
+
 .patient-card,
 .report-section-card,
 .item-row,
@@ -437,6 +446,14 @@ main {
 .patient-card-actions {
   display: flex;
   gap: 0.6rem;
+}
+
+.compact-patient-card {
+  padding: 0.95rem 1rem;
+}
+
+.patient-search-panel {
+  width: 100%;
 }
 
 .pagination-row {
@@ -509,6 +526,53 @@ main {
 .section-pill {
   background: color-mix(in srgb, var(--accent) 16%, white);
   color: color-mix(in srgb, var(--accent) 70%, black);
+}
+
+.template-toggle-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.template-toggle {
+  align-items: center;
+  background: #fff;
+  border: 1px solid rgba(21, 91, 156, 0.12);
+  border-radius: 14px;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  gap: 0.55rem;
+  min-height: 46px;
+  padding: 0.75rem 0.85rem;
+}
+
+.template-toggle input {
+  margin: 0;
+  min-height: 0;
+  width: auto;
+}
+
+.template-toggle.is-added {
+  background: color-mix(in srgb, var(--accent) 10%, white);
+  color: var(--muted);
+  cursor: default;
+}
+
+.catalog-more-details {
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  padding: 0.65rem 0.75rem;
+}
+
+.catalog-more-details summary {
+  color: var(--brand);
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+.catalog-more-details[open] summary {
+  margin-bottom: 0.7rem;
 }
 
 .item-reference {

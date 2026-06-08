@@ -8,7 +8,6 @@
         <h2>تحرير التقرير {{ bundle.report.report_number }}</h2>
       </div>
       <div class="action-row">
-        <a class="button secondary" href="{{ url_for('app.preview_report', report_id=bundle.report.id) }}">معاينة التقرير</a>
         <a class="button ghost" href="{{ url_for('app.report_history') }}">السجل</a>
         <form method="post" action="{{ url_for('app.cancel_report_draft', report_id=bundle.report.id) }}">
           <button class="button ghost danger-outline" type="submit" formnovalidate>إلغاء المسودة</button>
@@ -25,37 +24,45 @@
     </div>
   </section>
 
-  <div class="grid layout-report">
+  <div class="grid layout-report" data-report-editor-root data-report-id="{{ bundle.report.id }}">
     <section class="panel panel-highlight">
       <div class="panel-heading">
         <div>
-          <p class="eyebrow">إضافة أقسام</p>
-          <h3>اختر من القوالب الجاهزة</h3>
+          <p class="eyebrow">إضافة تحاليل</p>
+          <h3>اختر التحاليل الجاهزة</h3>
+          <p class="muted">مرتبة تلقائياً حسب الأكثر استخداماً. يمكنك تحديد أكثر من تحليل دفعة واحدة.</p>
         </div>
       </div>
-      <form method="post" action="{{ url_for('app.add_report_section', report_id=bundle.report.id) }}" class="stack-form">
-        <label>
-          نوع القسم
-          <select name="section_code" required>
-            {% for section in catalog %}
-              <option value="{{ section.code }}" {% if loop.first %}selected{% endif %}>
-                {{ section.name_ar }}{% if section.code != "custom" and section.code in existing_codes %} - مضاف{% endif %}
-              </option>
-            {% endfor %}
-          </select>
-        </label>
-        <label data-custom-name hidden>
-          عنوان القسم المخصص
-          <input name="custom_name" type="text" placeholder="مثال: تحليل إضافي">
-        </label>
-        <button type="submit">إضافة القسم</button>
+      <form method="post" action="{{ url_for('app.add_report_section', report_id=bundle.report.id) }}" class="stack-form" data-auto-add-form>
+        <div class="template-toggle-grid" data-template-grid="featured">
+          {% for section in featured_templates %}
+            <label class="template-toggle {% if section.code in existing_codes %}is-added{% endif %}">
+              <input type="checkbox" name="section_codes" value="{{ section.code }}" data-auto-add-checkbox {% if section.code in existing_codes %}disabled{% endif %}>
+              <span>{{ section.name_ar }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        {% if more_templates %}
+          <details class="catalog-more-details">
+            <summary>عرض المزيد من التحاليل</summary>
+            <div class="template-toggle-grid" data-template-grid="more">
+              {% for section in more_templates %}
+                <label class="template-toggle {% if section.code in existing_codes %}is-added{% endif %}">
+                  <input type="checkbox" name="section_codes" value="{{ section.code }}" data-auto-add-checkbox {% if section.code in existing_codes %}disabled{% endif %}>
+                  <span>{{ section.name_ar }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          </details>
+        {% endif %}
+        <button type="submit">إضافة التحاليل المحددة</button>
       </form>
 
       <div class="section-list">
         {% for section in bundle.sections %}
           <div class="section-pill">{{ section.section_name_ar }}</div>
         {% else %}
-          <p class="empty-state">لا توجد أقسام في المسودة بعد.</p>
+          <p class="empty-state">لا توجد تحاليل في المسودة بعد.</p>
         {% endfor %}
       </div>
     </section>
@@ -73,6 +80,10 @@
             تاريخ التقرير
             <input name="report_date" type="date" value="{{ bundle.report.report_date }}" required>
           </label>
+          <label>
+            القسم
+            <input name="department_name" type="text" value="{{ bundle.report.department_name or '' }}" placeholder="مثال: الإسعاف أو الداخلية">
+          </label>
         </div>
         <label>
           ملاحظات عامة
@@ -85,7 +96,7 @@
               <div class="panel-heading section-heading">
                 <div>
                   <h4>{{ section.section_name_ar }}</h4>
-                  <p class="muted">{{ section["items"]|length }} بنود</p>
+                  <p class="muted">{{ section["items"]|length }} مؤشر</p>
                 </div>
                 <button
                   class="button-link danger"
@@ -94,7 +105,7 @@
                   formmethod="post"
                   formnovalidate
                 >
-                  حذف القسم
+                  حذف التحليل
                 </button>
               </div>
 
@@ -185,14 +196,155 @@
             </section>
           {% endfor %}
         {% else %}
-          <p class="empty-state">أضف قسماً واحداً على الأقل قبل إدخال النتائج.</p>
+          <p class="empty-state">أضف تحليلاً واحداً على الأقل قبل إدخال النتائج.</p>
         {% endif %}
 
         <div class="action-row">
-          <button type="submit">حفظ النتائج</button>
-          <a class="button secondary" href="{{ url_for('app.preview_report', report_id=bundle.report.id) }}">معاينة قبل الاعتماد</a>
+          <button type="submit">حفظ ومعاينة التقرير</button>
         </div>
       </form>
     </section>
   </div>
+
+  <script>
+    (function () {
+      let autoAddBusy = false;
+
+      function getOrderStorageKey(root) {
+        return `report-template-order-${root.dataset.reportId}`;
+      }
+
+      function readTemplateOrder(root) {
+        try {
+          const raw = sessionStorage.getItem(getOrderStorageKey(root));
+          return raw ? JSON.parse(raw) : null;
+        } catch (error) {
+          console.error(error);
+          return null;
+        }
+      }
+
+      function collectTemplateOrder(root) {
+        const featured = Array.from(root.querySelectorAll('[data-template-grid="featured"] [data-auto-add-checkbox]'))
+          .map((input) => input.value);
+        const more = Array.from(root.querySelectorAll('[data-template-grid="more"] [data-auto-add-checkbox]'))
+          .map((input) => input.value);
+        return { featured, more };
+      }
+
+      function persistTemplateOrder(root) {
+        try {
+          sessionStorage.setItem(getOrderStorageKey(root), JSON.stringify(collectTemplateOrder(root)));
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      function restoreTemplateOrder(root) {
+        const saved = readTemplateOrder(root);
+        if (!saved) {
+          persistTemplateOrder(root);
+          return;
+        }
+
+        const featuredGrid = root.querySelector('[data-template-grid="featured"]');
+        const moreGrid = root.querySelector('[data-template-grid="more"]');
+        const allLabels = Array.from(root.querySelectorAll(".template-toggle"));
+        const map = new Map(
+          allLabels.map((label) => {
+            const checkbox = label.querySelector("[data-auto-add-checkbox]");
+            return [checkbox?.value, label];
+          }).filter(([value]) => value)
+        );
+
+        if (featuredGrid) featuredGrid.innerHTML = "";
+        if (moreGrid) moreGrid.innerHTML = "";
+
+        (saved.featured || []).forEach((code) => {
+          const label = map.get(code);
+          if (label && featuredGrid) {
+            featuredGrid.appendChild(label);
+            map.delete(code);
+          }
+        });
+
+        (saved.more || []).forEach((code) => {
+          const label = map.get(code);
+          if (label && moreGrid) {
+            moreGrid.appendChild(label);
+            map.delete(code);
+          }
+        });
+
+        map.forEach((label) => {
+          if (moreGrid) {
+            moreGrid.appendChild(label);
+          } else if (featuredGrid) {
+            featuredGrid.appendChild(label);
+          }
+        });
+      }
+
+      async function autoAddAnalysis(checkbox) {
+        const form = checkbox.closest("[data-auto-add-form]");
+        if (!form || autoAddBusy || !checkbox.checked) return;
+
+        autoAddBusy = true;
+        checkbox.disabled = true;
+
+        const payload = new FormData();
+        payload.append("section_codes", checkbox.value);
+
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            body: payload,
+            headers: { "X-Requested-With": "fetch" }
+          });
+          const html = await response.text();
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          const nextRoot = doc.querySelector("[data-report-editor-root]");
+          const currentRoot = document.querySelector("[data-report-editor-root]");
+          if (!nextRoot || !currentRoot) {
+            window.location.reload();
+            return;
+          }
+          restoreTemplateOrder(nextRoot);
+          currentRoot.replaceWith(nextRoot);
+
+          const nextFlash = doc.querySelector(".flash-stack");
+          const currentFlash = document.querySelector(".flash-stack");
+          if (nextFlash) {
+            if (currentFlash) {
+              currentFlash.replaceWith(nextFlash);
+            } else {
+              const pageShell = document.querySelector(".page-shell");
+              const main = document.querySelector("main");
+              if (pageShell && main) {
+                pageShell.insertBefore(nextFlash, main);
+              }
+            }
+          } else if (currentFlash) {
+            currentFlash.remove();
+          }
+        } catch (error) {
+          console.error(error);
+          form.requestSubmit();
+        } finally {
+          autoAddBusy = false;
+        }
+      }
+
+      const initialRoot = document.querySelector("[data-report-editor-root]");
+      if (initialRoot) {
+        persistTemplateOrder(initialRoot);
+      }
+
+      document.addEventListener("change", function (event) {
+        const checkbox = event.target.closest("[data-auto-add-checkbox]");
+        if (!checkbox) return;
+        autoAddAnalysis(checkbox);
+      });
+    })();
+  </script>
 {% endblock %}

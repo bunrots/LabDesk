@@ -63,13 +63,6 @@
         window.print();
       });
 
-      document.addEventListener("change", function (event) {
-        if (event.target.matches("[name='section_code']")) {
-          const customWrap = document.querySelector("[data-custom-name]");
-          if (customWrap) customWrap.hidden = event.target.value !== "custom";
-        }
-      });
-
       function applyAccent(color) {
         if (!color) return;
         document.documentElement.style.setProperty("--accent", color);

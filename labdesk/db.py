@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS reports (
     report_number TEXT NOT NULL UNIQUE,
     patient_id INTEGER NOT NULL,
     report_date TEXT NOT NULL,
+    department_name TEXT,
     status TEXT NOT NULL DEFAULT 'draft',
     revision_of_report_id INTEGER,
     finalized_at TEXT,
@@ -168,6 +169,8 @@ def run_migrations(db: sqlite3.Connection) -> None:
         db.execute("ALTER TABLE patients ADD COLUMN age_unit TEXT")
 
     report_columns = _table_columns(db, "reports")
+    if "department_name" not in report_columns:
+        db.execute("ALTER TABLE reports ADD COLUMN department_name TEXT")
     if "lab_header_text" not in report_columns:
         db.execute("ALTER TABLE reports ADD COLUMN lab_header_text TEXT")
     if "lab_footer_text" not in report_columns:

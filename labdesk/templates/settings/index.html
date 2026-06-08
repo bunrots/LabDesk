@@ -114,29 +114,29 @@
   <section class="panel settings-panel">
     <div class="panel-heading settings-heading-tight">
       <div>
-        <p class="eyebrow">قوالب الأقسام</p>
-        <h3>إدارة أسماء الأقسام والتحاليل الافتراضية</h3>
+        <p class="eyebrow">قوالب التحاليل</p>
+        <h3>إدارة أسماء التحاليل والمؤشرات الافتراضية</h3>
       </div>
     </div>
 
     <div class="grid two-columns settings-creation-grid settings-builder-grid">
       <form method="post" action="{{ url_for('app.create_section_template_view') }}" class="template-create-card settings-card-tight settings-builder-card">
         <div class="settings-card-head">
-          <h4>إضافة قسم جديد</h4>
-          <p class="muted">أنشئ قسماً يظهر عند بناء التقرير.</p>
+          <h4>إضافة تحليل جديد</h4>
+          <p class="muted">أنشئ تحليلاً يظهر عند بناء التقرير.</p>
         </div>
         <div class="grid compact-grid settings-tight-grid">
           <label>
             الاسم العربي
-            <input name="name_ar" type="text" placeholder="قسم جديد" required>
+            <input name="name_ar" type="text" placeholder="تحليل جديد" required>
           </label>
           <label>
-            رمز القسم
+            رمز التحليل
             <input name="code" type="text" placeholder="renal_panel" required>
           </label>
         </div>
         <label>
-          نوع القسم
+          نوع التحليل
           <select name="section_type" required data-section-type-select>
             <option value="panel">{{ section_type_info['panel']['label'] }}</option>
             <option value="structured">{{ section_type_info['structured']['label'] }}</option>
@@ -147,12 +147,12 @@
           <strong>{{ section_type_info['panel']['label'] }}</strong>
           <p>{{ section_type_info['panel']['description'] }}</p>
         </div>
-        <button class="button compact-action" type="submit">إضافة القسم</button>
+        <button class="button compact-action" type="submit">إضافة التحليل</button>
       </form>
 
       <form method="post" action="{{ url_for('app.create_test_template_view') }}" class="template-create-card settings-card-tight settings-builder-card" data-test-form>
         <div class="settings-card-head">
-          <h4>إضافة تحليل جديد</h4>
+          <h4>إضافة مؤشر جديد</h4>
           <p class="muted">نوع الحقل يحدد ما الذي يظهر في نموذج الإدخال والطباعة.</p>
         </div>
         <div class="grid compact-grid settings-tight-grid">
@@ -161,7 +161,7 @@
             <input name="label_ar" type="text" placeholder="حديد المصل" required>
           </label>
           <label>
-            القسم
+            التحليل
             <select name="section_code" required>
               <option value="">اختر</option>
               {% for section in section_choices %}
@@ -172,7 +172,7 @@
         </div>
         <div class="grid compact-grid settings-tight-grid">
           <label>
-            رمز التحليل
+            رمز المؤشر
             <input name="test_code" type="text" placeholder="serum_iron" required>
           </label>
           <label>
@@ -211,8 +211,8 @@
         <div class="field-type-hint muted" data-result-hint>
           الحقل الرقمي يدعم الوحدة والمدى المرجعي والتنبيه مرتفع/منخفض.
         </div>
-        <p class="muted settings-builder-note">يمكن إضافة مراجع متقدمة حسب الجنس أو العمر بعد حفظ التحليل الرقمي ثم فتحه من قائمة الأقسام أدناه.</p>
-        <button class="button compact-action" type="submit">إضافة التحليل</button>
+        <p class="muted settings-builder-note">يمكن إضافة مراجع متقدمة حسب الجنس أو العمر بعد حفظ المؤشر الرقمي ثم فتحه من قائمة التحاليل أدناه.</p>
+        <button class="button compact-action" type="submit">إضافة المؤشر</button>
       </form>
     </div>
 
@@ -229,16 +229,16 @@
           <form method="post" action="{{ url_for('app.update_section_template_view', section_code=section.code) }}" class="stack-form settings-inline-form">
             <div class="settings-inline-row">
               <label>
-                اسم القسم
+                اسم التحليل
                 <input name="name_ar" type="text" value="{{ section.name_ar }}">
               </label>
               <div class="settings-inline-actions">
                 <label class="checkbox-label checkbox-align-end">
                   <input name="is_active" type="checkbox" {% if section.is_active %}checked{% endif %}>
-                  تفعيل القسم
+                  تفعيل التحليل
                 </label>
-                <button type="submit" formaction="{{ url_for('app.delete_section_template_view', section_code=section.code) }}" formmethod="post" class="button ghost danger-outline">حذف القسم</button>
-                <button type="submit">حفظ القسم</button>
+                <button type="submit" formaction="{{ url_for('app.delete_section_template_view', section_code=section.code) }}" formmethod="post" class="button ghost danger-outline">حذف التحليل</button>
+                <button type="submit">حفظ التحليل</button>
               </div>
             </div>
           </form>
@@ -259,7 +259,7 @@
                 </div>
                 <div class="grid settings-test-grid">
                   <label>
-                    اسم التحليل
+                    اسم المؤشر
                     <input name="label_ar" type="text" value="{{ test.label_ar }}">
                   </label>
                   <label>
@@ -294,8 +294,8 @@
                 <div class="settings-test-footer">
                   <span class="muted">{{ "حقول مرجعية ووحدة" if test.result_type == "numeric" else "خيارات جاهزة" if test.result_type == "choice" else "إدخال نصي حر" }}</span>
                   <div class="settings-test-footer-actions">
-                    <button type="submit" formaction="{{ url_for('app.delete_test_template_view', test_id=test.id) }}" formmethod="post" class="button ghost danger-outline">حذف التحليل</button>
-                    <button type="submit">حفظ التحليل</button>
+                    <button type="submit" formaction="{{ url_for('app.delete_test_template_view', test_id=test.id) }}" formmethod="post" class="button ghost danger-outline">حذف المؤشر</button>
+                    <button type="submit">حفظ المؤشر</button>
                   </div>
                 </div>
                 </form>
@@ -378,7 +378,7 @@
                 {% endif %}
               </div>
             {% else %}
-              <p class="empty-state">لا توجد تحاليل معرفة لهذا القسم بعد.</p>
+              <p class="empty-state">لا توجد مؤشرات معرفة لهذا التحليل بعد.</p>
             {% endfor %}
           </div>
         </details>

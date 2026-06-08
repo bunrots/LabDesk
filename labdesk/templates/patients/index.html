@@ -4,8 +4,8 @@
   <section class="hero-card hero-card-wide hero-card-tight">
     <div>
       <p class="eyebrow">الاستقبال</p>
-      <h2>بحث عن مريض أو إضافة مريض جديد</h2>
-      <p>المسار المقصود: ابحث أولاً، وإن لم تجد المريض أضفه، ثم افتح ملفه أو أنشئ تقريراً جديداً.</p>
+      <h2>إضافة مريض جديد أو متابعة ملف قائم</h2>
+      <p>المسار المقصود هنا: أدخل اسم المريض الثلاثي والعمر الحالي، وإذا كان الاسم موجوداً مسبقاً سنعرض لك الملفات المطابقة قبل إنشاء مريض جديد.</p>
     </div>
     <div class="hero-stats">
       <div class="stat-card">
@@ -27,18 +27,81 @@
     </div>
   </section>
 
-  <div class="grid two-columns">
-    <section class="panel panel-highlight">
+  <section class="panel panel-highlight">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">1. إضافة</p>
+        <h3>أضف مريضاً جديداً</h3>
+      </div>
+      <span class="muted">ينتقل مباشرة إلى شاشة التقرير</span>
+    </div>
+    <form method="post" class="stack-form" id="patient-create-form" data-exact-match-url="{{ url_for('app.patient_exact_match_lookup') }}">
+      <label>
+        اسم المريض الثلاثي
+        <input id="full_name" name="full_name" type="text" required value="{{ pending_patient.full_name }}">
+      </label>
+      <div class="grid patient-intake-grid">
+        <label>
+          العمر الحالي
+          <input name="current_age" type="text" inputmode="numeric" dir="ltr" spellcheck="false" required value="{{ pending_patient.current_age }}">
+        </label>
+        <label>
+          الجنس
+          <select name="sex">
+            <option value="unknown" {% if pending_patient.sex == "unknown" %}selected{% endif %}>غير محدد</option>
+            <option value="male" {% if pending_patient.sex == "male" %}selected{% endif %}>ذكر</option>
+            <option value="female" {% if pending_patient.sex == "female" %}selected{% endif %}>أنثى</option>
+          </select>
+        </label>
+        <label>
+          الهاتف
+          <input name="phone" type="text" inputmode="tel" value="{{ pending_patient.phone }}">
+        </label>
+      </div>
+      <section class="panel nested-panel duplicate-match-panel {% if not duplicate_matches %}is-hidden{% endif %}" id="duplicate-match-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">مطابقة اسم</p>
+              <h4 id="duplicate-match-title">تم العثور على ملفات بنفس الاسم الثلاثي</h4>
+              <p class="muted" id="duplicate-match-copy">يمكنك فتح أحد هذه الملفات مباشرة أو متابعة إنشاء مريض جديد بنفس الاسم إذا كنت متأكداً.</p>
+            </div>
+          </div>
+          <div class="patient-list" id="duplicate-match-list">
+            {% for patient in duplicate_matches %}
+              <article class="patient-card compact-patient-card">
+                <div>
+                  <h4>{{ patient.full_name }}</h4>
+                  <p>{{ patient.patient_number }} • {{ sex_labels[patient.sex] }}</p>
+                  <p>العمر الحالي: {{ patient.age_value or "غير متاح" }} {% if patient.age_value %}سنة{% endif %}</p>
+                </div>
+                <div class="patient-card-actions">
+                  <a class="button ghost" href="{{ url_for('app.patient_detail', patient_id=patient.id) }}">فتح الملف</a>
+                  <a class="button secondary" href="{{ url_for('app.patient_quick_report', patient_id=patient.id) }}">تقرير جديد</a>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="confirm_duplicate" value="1">
+      </section>
+      {% if duplicate_matches %}
+        <button type="submit">المتابعة وإنشاء مريض جديد بنفس الاسم</button>
+      {% else %}
+        <button type="submit">حفظ المريض والبدء بالتقرير</button>
+      {% endif %}
+    </form>
+  </section>
+
+  <section class="panel patient-search-panel">
       <div class="panel-heading">
         <div>
-          <p class="eyebrow">1. بحث</p>
+          <p class="eyebrow">2. بحث</p>
           <h3>ابحث عن ملف مريض</h3>
-          <p class="muted">لن يتم عرض أي ملفات حتى تبدأ بالبحث. عند البحث، تظهر 5 نتائج في كل صفحة.</p>
+          <p class="muted">هذا البحث ثانوي للاستخدام اليومي. لن يتم عرض أي ملفات حتى تبدأ بالبحث، وعند البحث تظهر 5 نتائج في كل صفحة.</p>
         </div>
       </div>
       <form class="stack-form" method="get">
         <label for="q">
-          اسم المريض
+          اسم المريض الثلاثي
           <input id="q" name="q" type="search" value="{{ query }}" placeholder="اكتب الاسم ثم اضغط بحث">
         </label>
         <div class="action-row">
@@ -59,10 +122,7 @@
               </div>
               <div class="patient-card-actions">
                 <a class="button ghost" href="{{ url_for('app.patient_detail', patient_id=patient['row']['id']) }}">فتح الملف</a>
-                <form method="post" action="{{ url_for('app.new_report') }}">
-                  <input type="hidden" name="patient_id" value="{{ patient['row']['id'] }}">
-                  <button class="button secondary" type="submit">تقرير جديد</button>
-                </form>
+                <a class="button secondary" href="{{ url_for('app.patient_quick_report', patient_id=patient['row']['id']) }}">تقرير جديد</a>
               </div>
             </article>
           {% endfor %}
@@ -83,75 +143,7 @@
           <p class="empty-state">ابدأ بكتابة اسم المريض للبحث. لن تظهر أي قائمة قبل تنفيذ البحث.</p>
         {% endif %}
       {% endif %}
-    </section>
-
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">2. إضافة</p>
-          <h3>أضف مريضاً جديداً</h3>
-        </div>
-        <span class="muted">ينتقل مباشرة إلى شاشة التقرير</span>
-      </div>
-      <form method="post" class="stack-form">
-        <label>
-          اسم المريض
-          <input name="full_name" type="text" required>
-        </label>
-        <div class="grid compact-grid">
-          <label>
-            الجنس
-            <select name="sex">
-              <option value="unknown">غير محدد</option>
-              <option value="male">ذكر</option>
-              <option value="female">أنثى</option>
-            </select>
-          </label>
-          <label>
-            الهاتف
-            <input name="phone" type="text" inputmode="tel">
-          </label>
-        </div>
-        <fieldset class="dob-fieldset">
-          <legend>تاريخ الميلاد</legend>
-          <div class="dob-grid">
-            <label>
-              اليوم
-              <select name="dob_day" required>
-                <option value="">اليوم</option>
-                {% for day in dob_days %}
-                  <option value="{{ day }}">{{ day }}</option>
-                {% endfor %}
-              </select>
-            </label>
-            <label>
-              الشهر
-              <select name="dob_month" required>
-                <option value="">الشهر</option>
-                {% for month_value, month_label in dob_months %}
-                  <option value="{{ month_value }}">{{ month_label }}</option>
-                {% endfor %}
-              </select>
-            </label>
-            <label>
-              السنة
-              <select name="dob_year" required>
-                <option value="">السنة</option>
-                {% for year in dob_years %}
-                  <option value="{{ year }}">{{ year }}</option>
-                {% endfor %}
-              </select>
-            </label>
-          </div>
-        </fieldset>
-        <label>
-          ملاحظات
-          <textarea name="notes" rows="3"></textarea>
-        </label>
-        <button type="submit">حفظ المريض والبدء بالتقرير</button>
-      </form>
-    </section>
-  </div>
+  </section>
 
   <section class="panel">
     <div class="panel-heading">
@@ -194,4 +186,85 @@
       <p class="empty-state">لا توجد تقارير بعد.</p>
     {% endif %}
   </section>
+
+  <script>
+    (function () {
+      const form = document.getElementById("patient-create-form");
+      if (!form) return;
+
+      const nameInput = document.getElementById("full_name");
+      const panel = document.getElementById("duplicate-match-panel");
+      const list = document.getElementById("duplicate-match-list");
+      const submitButton = form.querySelector('button[type="submit"]');
+      const exactMatchUrl = form.dataset.exactMatchUrl;
+      let lastRequestedName = "";
+
+      const setPanelHidden = (hidden) => {
+        panel.classList.toggle("is-hidden", hidden);
+      };
+
+      const escapeHtml = (value) =>
+        String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+
+      const renderMatches = (matches) => {
+        if (!matches.length) {
+          list.innerHTML = "";
+          setPanelHidden(true);
+          submitButton.textContent = "حفظ المريض والبدء بالتقرير";
+          return;
+        }
+
+        list.innerHTML = matches.map((patient) => `
+          <article class="patient-card compact-patient-card">
+            <div>
+              <h4>${escapeHtml(patient.full_name)}</h4>
+              <p>${escapeHtml(patient.patient_number)} • ${escapeHtml(patient.sex_label)}</p>
+              <p>العمر الحالي: ${patient.age_value ? `${escapeHtml(patient.age_value)} سنة` : "غير متاح"}</p>
+            </div>
+            <div class="patient-card-actions">
+              <a class="button ghost" href="/patients/${patient.id}">فتح الملف</a>
+              <a class="button secondary" href="/patients/${patient.id}/quick-report">تقرير جديد</a>
+            </div>
+          </article>
+        `).join("");
+        setPanelHidden(false);
+        submitButton.textContent = "المتابعة وإنشاء مريض جديد بنفس الاسم";
+      };
+
+      const lookupMatches = async () => {
+        const currentName = nameInput.value.trim().replace(/\s+/g, " ");
+        if (!currentName) {
+          renderMatches([]);
+          return;
+        }
+        lastRequestedName = currentName;
+        try {
+          const response = await fetch(`${exactMatchUrl}?full_name=${encodeURIComponent(currentName)}`, {
+            headers: { "X-Requested-With": "fetch" },
+          });
+          if (!response.ok) return;
+          const data = await response.json();
+          if (nameInput.value.trim().replace(/\s+/g, " ") !== lastRequestedName) return;
+          renderMatches(data.matches || []);
+        } catch (_error) {
+          // Keep the form usable even if the lookup fails.
+        }
+      };
+
+      let timer = null;
+      nameInput.addEventListener("input", () => {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(lookupMatches, 250);
+      });
+
+      if (nameInput.value.trim()) {
+        lookupMatches();
+      }
+    })();
+  </script>
 {% endblock %}
