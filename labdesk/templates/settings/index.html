@@ -87,26 +87,36 @@
         </div>
       </div>
       <div class="profile-preview settings-preview-card settings-header-preview">
-        <header class="report-letterhead settings-preview-letterhead" aria-hidden="true">
-          <div class="letterhead-left">
-            <div class="report-brand report-brand-left">
-              {% if profile.logo_filename %}
-                <img class="report-logo settings-preview-logo" src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="شعار المخبر">
-              {% endif %}
-              <div class="report-brand-copy">
-                <h2>{{ profile.facility_name }}</h2>
-                {% if profile.report_subtitle %}<p>{{ profile.report_subtitle }}</p>{% endif %}
+        <div class="settings-preview-document">
+          <header class="report-letterhead settings-preview-letterhead" aria-hidden="true">
+            <div class="letterhead-left">
+              <div class="report-brand report-brand-left">
+                {% if profile.logo_filename %}
+                  <img class="report-logo settings-preview-logo" src="{{ url_for('app.uploaded_logo', filename=profile.logo_filename) }}" alt="شعار المخبر">
+                {% endif %}
+                <div class="report-brand-copy">
+                  <h2>{{ profile.facility_name }}</h2>
+                  {% if profile.report_subtitle %}<p>{{ profile.report_subtitle }}</p>{% endif %}
+                </div>
               </div>
             </div>
-          </div>
-          <div class="letterhead-right">
-            <div class="report-title-block report-title-block-right">
-              {% if profile.authority_line_1 %}<p>{{ profile.authority_line_1 }}</p>{% endif %}
-              {% if profile.authority_line_2 %}<p>{{ profile.authority_line_2 }}</p>{% endif %}
-              {% if profile.authority_line_3 %}<p>{{ profile.authority_line_3 }}</p>{% endif %}
+            <div class="letterhead-right">
+              <div class="report-title-block report-title-block-right">
+                {% if profile.authority_line_1 %}<p>{{ profile.authority_line_1 }}</p>{% endif %}
+                {% if profile.authority_line_2 %}<p>{{ profile.authority_line_2 }}</p>{% endif %}
+                {% if profile.authority_line_3 %}<p>{{ profile.authority_line_3 }}</p>{% endif %}
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
+          <div class="report-accent-line settings-preview-accent"></div>
+          <section class="report-main-title settings-preview-title">
+            <p class="report-kicker">معاينة رأس التقرير</p>
+            <h1>{{ profile.report_title }}</h1>
+            {% if profile.header_notes %}
+              <p>{{ profile.header_notes }}</p>
+            {% endif %}
+          </section>
+        </div>
       </div>
     </section>
   </div>
@@ -222,7 +232,11 @@
           <summary class="template-summary">
             <div class="template-summary-copy">
               <strong>{{ section.name_ar }}</strong>
-              <p class="muted">{{ section.code }} • {{ section.active_test_count }}/{{ section.tests|length }} مفعل • {{ section_type_info[section.section_type]['label'] }}</p>
+              <div class="settings-summary-meta">
+                <span class="settings-code-chip">{{ section.code }}</span>
+                <span class="muted">{{ section.active_test_count }}/{{ section.tests|length }} مفعل</span>
+                <span class="muted">{{ section_type_info[section.section_type]['label'] }}</span>
+              </div>
             </div>
             <span class="section-pill">{{ "مفعل" if section.is_active else "مخفي" }}</span>
           </summary>
@@ -250,7 +264,10 @@
                 <div class="settings-test-head">
                   <div>
                     <strong>{{ test.label_ar }}</strong>
-                    <p class="muted settings-code-line">{{ test.test_code }} • {{ "رقمي" if test.result_type == "numeric" else "اختيار" if test.result_type == "choice" else "نصي" }}</p>
+                    <div class="settings-summary-meta">
+                      <span class="settings-code-chip">{{ test.test_code }}</span>
+                      <span class="muted">{{ "رقمي" if test.result_type == "numeric" else "اختيار" if test.result_type == "choice" else "نصي" }}</span>
+                    </div>
                   </div>
                   <label class="checkbox-label checkbox-align-end settings-activation-toggle">
                     <input name="is_active" type="checkbox" {% if test.is_active %}checked{% endif %}>

@@ -714,6 +714,18 @@ main {
   border-color: color-mix(in srgb, var(--accent) 14%, white);
 }
 
+.settings-panel input:not([type="file"]):not([type="color"]):not([type="checkbox"]),
+.settings-panel select,
+.settings-panel textarea {
+  border-radius: 12px;
+  min-height: 42px;
+  padding: 0.58rem 0.72rem;
+}
+
+.settings-panel textarea {
+  min-height: 82px;
+}
+
 .settings-heading-tight {
   margin-bottom: 0.6rem;
 }
@@ -769,7 +781,7 @@ main {
 
 .settings-header-preview {
   background: linear-gradient(180deg, #fff, #fbfdff);
-  padding: 0.95rem 1rem;
+  padding: 0.85rem 0.9rem;
 }
 
 .settings-preview-logo {
@@ -777,8 +789,29 @@ main {
   width: 58px;
 }
 
+.settings-preview-document {
+  display: grid;
+  gap: 0.35rem;
+}
+
 .settings-preview-letterhead {
   min-height: 70px;
+}
+
+.settings-preview-accent {
+  margin: 0.05rem 0 0.25rem;
+}
+
+.settings-preview-title {
+  margin: 0;
+}
+
+.settings-preview-title h1 {
+  font-size: 1.18rem;
+}
+
+.settings-preview-title p {
+  font-size: 0.88rem;
 }
 
 .type-help-card,
@@ -805,7 +838,9 @@ main {
 }
 
 .settings-template-card {
-  padding: 0.6rem 0.75rem;
+  background: linear-gradient(180deg, #fff, #fcfdff);
+  border-color: rgba(21, 91, 156, 0.1);
+  padding: 0.65rem 0.75rem;
 }
 
 .settings-inline-form {
@@ -831,8 +866,10 @@ main {
 }
 
 .settings-test-editor {
-  border-radius: 12px;
-  padding: 0.6rem 0.7rem;
+  background: linear-gradient(180deg, #fff, #fbfdff);
+  border: 1px solid rgba(21, 91, 156, 0.08);
+  border-radius: 14px;
+  padding: 0.7rem 0.75rem;
 }
 
 .settings-test-head {
@@ -847,14 +884,16 @@ main {
   align-items: end;
   display: grid;
   gap: 0.45rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .settings-test-footer {
   align-items: center;
+  border-top: 1px dashed color-mix(in srgb, var(--accent) 12%, white);
   display: flex;
   justify-content: space-between;
-  margin-top: 0.4rem;
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
 }
 
 .settings-test-footer-actions {
@@ -902,6 +941,27 @@ main {
 .settings-builder-card > .compact-action {
   align-self: stretch;
   width: 100%;
+}
+
+.settings-summary-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.18rem;
+}
+
+.settings-code-chip {
+  background: color-mix(in srgb, var(--accent) 10%, white);
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, white);
+  border-radius: 999px;
+  color: var(--muted);
+  direction: ltr;
+  display: inline-flex;
+  font-size: 0.74rem;
+  line-height: 1;
+  padding: 0.24rem 0.55rem;
+  unicode-bidi: plaintext;
 }
 
 .report-brand {
@@ -1066,7 +1126,7 @@ main {
 .meta-time-stamp {
   color: #3e4c5d;
   display: inline-block;
-  font-size: 0.76rem;
+  font-size: 0.84rem;
   unicode-bidi: plaintext;
 }
 
@@ -1270,10 +1330,14 @@ main {
 }
 
 .range-row {
+  background: linear-gradient(180deg, #fff, #fbfdff);
+  border: 1px solid rgba(21, 91, 156, 0.08);
+  border-radius: 12px;
   align-items: end;
   display: grid;
   gap: 0.35rem;
   grid-template-columns: 0.7fr 1.15fr 1.15fr 0.9fr 0.9fr 1.1fr auto;
+  padding: 0.45rem;
 }
 
 .range-row input,
@@ -1313,6 +1377,7 @@ main {
   .layout-report,
   .hero-card-wide,
   .template-test-grid,
+  .settings-test-grid,
   .item-table-head,
   .item-table-row {
     grid-template-columns: 1fr;
