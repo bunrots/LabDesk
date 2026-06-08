@@ -109,87 +109,51 @@
                 </button>
               </div>
 
-              <div class="item-list">
+              <div class="item-table">
+                <div class="item-table-head">
+                  <span>المؤشر</span>
+                  <span>النتيجة</span>
+                  <span>المرجع</span>
+                  <span>الوحدة</span>
+                </div>
                 {% for item in section["items"] %}
-                  <div class="item-row {{ item.flag_class }}">
-                    <div class="item-head">
-                      <div>
+                  <div class="item-table-row {{ item.flag_class }} {% if item.result_type == 'text' %}is-text{% endif %}">
+                    <div class="item-cell item-name-cell">
+                      <div class="item-name-stack">
                         <strong>{{ item.label_ar }}</strong>
-                        {% if item.reference_display %}
-                          <p class="muted item-reference">المرجع المتوقع: {{ item.reference_display }}</p>
-                        {% endif %}
-                      </div>
-                      <div class="chip-row">
-                        <span class="result-badge">{{ item.result_type }}</span>
-                        {% if item.flag_label %}
-                          <span class="flag-badge {{ item.flag_class }}">{{ item.flag_label }}</span>
-                        {% endif %}
+                        <span class="muted item-type-inline">
+                          {{ "رقمي" if item.result_type == "numeric" else "اختيار" if item.result_type == "choice" else "نصي" }}
+                        </span>
                       </div>
                     </div>
-                    {% if item.result_type == "numeric" %}
-                      <div class="grid item-grid">
-                        <label>
-                          النتيجة
-                          <input
-                            name="item-{{ item.id }}-numeric"
-                            type="text"
-                            inputmode="decimal"
-                            dir="ltr"
-                            spellcheck="false"
-                            value="{{ '' if item.value_numeric is none else item.value_numeric }}"
-                          >
-                        </label>
-                        <label>
-                          الوحدة
-                          <input name="item-{{ item.id }}-unit" type="text" value="{{ item.unit_ar or '' }}">
-                        </label>
-                        <label>
-                          المجال المرجعي
-                          <input name="item-{{ item.id }}-reference" type="text" value="{{ item.reference_display or '' }}">
-                        </label>
-                      </div>
-                    {% elif item.result_type == "choice" %}
-                      <div class="grid item-grid">
-                        <label>
-                          النتيجة
-                          <select name="item-{{ item.id }}-choice">
-                            <option value="">اختر</option>
-                            {% for choice in item.choices %}
-                              <option value="{{ choice }}" {% if item.value_choice == choice %}selected{% endif %}>{{ choice }}</option>
-                            {% endfor %}
-                          </select>
-                        </label>
-                        <label>
-                          المجال المرجعي
-                          <input name="item-{{ item.id }}-reference" type="text" value="{{ item.reference_display or '' }}">
-                        </label>
-                        <label>
-                          الوحدة
-                          <input name="item-{{ item.id }}-unit" type="text" value="{{ item.unit_ar or '' }}">
-                        </label>
-                      </div>
-                    {% else %}
-                      <label>
-                        النتيجة
-                        <textarea name="item-{{ item.id }}-text" rows="3">{{ item.value_text or '' }}</textarea>
-                      </label>
-                      <div class="grid item-grid">
-                        <label>
-                          المجال المرجعي
-                          <input name="item-{{ item.id }}-reference" type="text" value="{{ item.reference_display or '' }}">
-                        </label>
-                        <label class="item-grid-span-2">
-                          ملاحظات
-                          <input name="item-{{ item.id }}-comment" type="text" value="{{ item.comment or '' }}">
-                        </label>
-                      </div>
-                    {% endif %}
-                    {% if item.result_type != "text" %}
-                      <label>
-                        ملاحظات
-                        <input name="item-{{ item.id }}-comment" type="text" value="{{ item.comment or '' }}">
-                      </label>
-                    {% endif %}
+                    <div class="item-cell item-value-cell {% if item.result_type == 'text' %}item-value-cell-wide{% endif %}">
+                      {% if item.result_type == "numeric" %}
+                        <input
+                          class="compact-result-input"
+                          name="item-{{ item.id }}-numeric"
+                          type="text"
+                          inputmode="decimal"
+                          dir="ltr"
+                          spellcheck="false"
+                          value="{{ '' if item.value_numeric is none else item.value_numeric }}"
+                        >
+                      {% elif item.result_type == "choice" %}
+                        <select class="compact-result-input" name="item-{{ item.id }}-choice">
+                          <option value="">اختر</option>
+                          {% for choice in item.choices %}
+                            <option value="{{ choice }}" {% if item.value_choice == choice %}selected{% endif %}>{{ choice }}</option>
+                          {% endfor %}
+                        </select>
+                      {% else %}
+                        <textarea class="compact-result-textarea" name="item-{{ item.id }}-text" rows="2">{{ item.value_text or '' }}</textarea>
+                      {% endif %}
+                    </div>
+                    <div class="item-cell item-reference-cell">
+                      <span class="static-field">{{ item.reference_display or "-" }}</span>
+                    </div>
+                    <div class="item-cell item-unit-cell">
+                      <span class="static-field">{{ item.unit_ar or "-" }}</span>
+                    </div>
                   </div>
                 {% endfor %}
               </div>

@@ -61,7 +61,12 @@
       </tr>
       <tr>
         <th>تاريخ التقرير</th>
-        <td>{{ report.report_date }}</td>
+        <td>
+          {{ report.report_date }}
+          {% if report.finalized_at %}
+            <span class="meta-time-stamp">{{ format_time_portion(report.finalized_at) }}</span>
+          {% endif %}
+        </td>
         <th>القسم</th>
         <td>{{ report.department_name or "-" }}</td>
       </tr>
@@ -88,7 +93,6 @@
               <th>الحالة</th>
               <th>المرجع</th>
               <th>الوحدة</th>
-              <th>ملاحظات</th>
             </tr>
           </thead>
           <tbody>
@@ -105,7 +109,6 @@
                 </td>
                 <td>{{ item.reference_display }}</td>
                 <td>{{ item.unit_ar or "" }}</td>
-                <td>{{ item.comment or "" }}</td>
               </tr>
             {% endfor %}
           </tbody>

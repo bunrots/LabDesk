@@ -44,6 +44,12 @@ def normalize_person_name(value: str | None) -> str:
     return " ".join((value or "").split())
 
 
+def format_time_portion(value: str | None) -> str:
+    if not value or len(value) < 16:
+        return ""
+    return value[11:16]
+
+
 def normalize_numeric_input(value: str | None) -> str:
     raw = (value or "").strip()
     if not raw:
@@ -137,15 +143,9 @@ def compute_patient_age_days(patient, report_date: str | None = None):
 def format_age_from_days(age_days: int | None) -> str:
     if age_days is None:
         return "غير متاح"
-    if age_days < 31:
-        return f"{age_days} يوم"
-    if age_days < 365:
-        months = max(age_days // 30, 1)
-        return f"{months} شهر"
     years = age_days // 365
-    remainder_months = (age_days % 365) // 30
-    if remainder_months:
-        return f"{years} سنة و{remainder_months} شهر"
+    if years <= 0:
+        return "أقل من سنة"
     return f"{years} سنة"
 
 
@@ -1031,9 +1031,8 @@ def update_report(db, report_id: int, form):
         else:
             value_text = (form.get(f"item-{item['id']}-text") or "").strip() or None
 
-        reference_override = (form.get(f"item-{item['id']}-reference") or "").strip()
         reference_range = get_reference_range(db, item["test_code"], patient["sex"], age_days)
-        reference_text = reference_override or (reference_range["reference_text_ar"] if reference_range else None)
+        reference_text = reference_range["reference_text_ar"] if reference_range else None
         flag = calculate_flag(value_numeric, reference_range)
 
         db.execute(
@@ -1046,10 +1045,10 @@ def update_report(db, report_id: int, form):
                 value_text,
                 value_numeric,
                 value_choice,
-                (form.get(f"item-{item['id']}-unit") or item["unit_ar"] or "").strip() or None,
+                item["unit_ar"],
                 reference_text,
                 flag,
-                (form.get(f"item-{item['id']}-comment") or "").strip() or None,
+                None,
                 item["id"],
             ),
         )
@@ -1149,26 +1148,31 @@ def finalize_report(db, report_id: int):
     if bundle["report"]["status"] != "draft":
         raise ValueError("التقرير منجز مسبقاً.")
 
+    finalized_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    bundle["report"] = dict(bundle["report"])
+    bundle["report"]["status"] = "final"
+    bundle["report"]["finalized_at"] = finalized_at
     snapshot_html = render_snapshot_html(bundle)
     db.execute(
         """
         UPDATE reports
-        SET status = 'final', finalized_at = CURRENT_TIMESTAMP, snapshot_html = ?, updated_at = CURRENT_TIMESTAMP
+        SET status = 'final', finalized_at = ?, snapshot_html = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
         """,
-        (snapshot_html, report_id),
+        (finalized_at, snapshot_html, report_id),
     )
     db.commit()
 
 
 def record_print(db, report_id: int):
+    printed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     db.execute(
         """
         UPDATE reports
-        SET print_count = print_count + 1, printed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        SET print_count = print_count + 1, printed_at = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
         """,
-        (report_id,),
+        (printed_at, report_id),
     )
     db.commit()
 

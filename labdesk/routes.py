@@ -30,6 +30,7 @@ from .services import (
     finalize_report,
     get_catalog,
     get_dashboard_summary,
+    format_time_portion,
     get_history,
     get_lab_profile,
     get_patient,
@@ -90,7 +91,10 @@ def _delete_logo_file(filename: str | None) -> None:
 @bp.app_context_processor
 def inject_site_profile():
     db = get_db()
-    return {"site_profile": get_lab_profile(db)}
+    return {
+        "site_profile": get_lab_profile(db),
+        "format_time_portion": format_time_portion,
+    }
 
 
 @bp.route("/assets/logo/<path:filename>")
