@@ -41,6 +41,7 @@ Each platform currently includes:
 - `setup`
 - `run`
 - `backup`
+- `update`
 - `healthcheck`
 
 Windows also includes:

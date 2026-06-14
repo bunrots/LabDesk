@@ -28,6 +28,7 @@ Scripts:
 - `scripts/linux/setup.sh`
 - `scripts/linux/run.sh`
 - `scripts/linux/backup.sh`
+- `scripts/linux/update.sh`
 - `scripts/linux/healthcheck.sh`
 
 ### First-time setup
@@ -90,6 +91,7 @@ Scripts:
 - `scripts/windows/setup.ps1`
 - `scripts/windows/run.ps1`
 - `scripts/windows/backup.ps1`
+- `scripts/windows/update.ps1`
 - `scripts/windows/healthcheck.ps1`
 - `scripts/windows/prune_backups.ps1`
 - `scripts/windows/register_tasks.ps1`
@@ -202,14 +204,70 @@ Optional parameter:
 
 ## Updating
 
-Current recommended update model:
+Recommended update model:
 
 1. Stop the running app.
-2. Back up `instance/` first.
-3. Replace code files with the new release.
-4. Re-run setup if `requirements.txt` changed.
-5. Start the app again.
-6. Run the health check.
+2. Run the updater script with a target Git tag or branch.
+3. Start the app again.
+4. Run the health check.
+
+The updater script:
+
+- creates a backup first by default
+- fetches tags and branches from the remote
+- uses normal tracking for branches like `main`
+- checks out tags in detached mode for stable deployments
+- refreshes Python dependencies
+- preserves `instance/` and `backups/`
+
+### Linux update
+
+Deploy a specific tagged release:
+
+```bash
+./scripts/linux/update.sh v0.2.0
+```
+
+Deploy the latest `main` branch state from `origin`:
+
+```bash
+./scripts/linux/update.sh main
+```
+
+If you run the script without an argument, it follows the remote default branch automatically.
+
+Optional environment variables:
+
+- `REMOTE` to use a remote other than `origin`
+- `SKIP_BACKUP=1` if you intentionally want to skip the automatic backup
+
+### Windows update
+
+Deploy a specific tagged release:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\update.ps1 -TargetRef v0.2.0
+```
+
+Deploy the latest `main` branch state from `origin`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\update.ps1 -TargetRef main
+```
+
+If you run the script without `-TargetRef`, it follows the remote default branch automatically.
+
+Optional parameters:
+
+- `-RemoteName`
+- `-SkipBackup`
+
+### Important update notes
+
+- The scripts intentionally refuse to continue if tracked local code changes exist.
+- Untracked runtime folders such as `instance/` and `backups/` are not touched.
+- Branches like `main` stay attached and fast-forward on update.
+- Tags remain pinned by detached checkout, which is useful for fixed releases.
 
 Do not delete:
 
