@@ -94,6 +94,7 @@ def inject_site_profile():
     return {
         "site_profile": get_lab_profile(db),
         "format_time_portion": format_time_portion,
+        "app_version": current_app.config.get("APP_VERSION", "v0.0.0"),
     }
 
 

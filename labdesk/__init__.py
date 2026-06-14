@@ -13,6 +13,7 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.config.from_mapping(
         SECRET_KEY="dev",
         DATABASE=os.path.join(app.instance_path, "labdesk.sqlite"),
+        APP_VERSION="v0.2.0",
         DEFAULT_LAB_HEADER="المخبر الطبي\nتقرير نتائج مخبرية",
         DEFAULT_LAB_FOOTER="اسم الفني: __________    التوقيع: __________    الختم: __________",
     )
